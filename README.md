@@ -127,6 +127,8 @@ docs/             Product and feature research notes
 | [`release.yml`](.github/workflows/release.yml) | Tag `v*.*.*` | Verifies the tag matches the manifest version, re-runs the checks, and publishes a GitHub release with the store zip attached |
 | [`pages.yml`](.github/workflows/pages.yml) | Changes under `site/` | Deploys the landing page to GitHub Pages |
 
+The Pages workflow needs Pages switched on once, under **Settings → Pages → Build and deployment → Source: GitHub Actions**. GitHub only offers Pages for a private repository on a paid plan, so on a free account the repository has to be public first. Until then the workflow fails with `Get Pages site failed`, and the rest of CI is unaffected.
+
 ## Privacy and product boundaries
 
 - LexiCue does **not** inspect video/audio bytes, Widevine/CDM traffic, license requests, cookies, or authentication tokens.
