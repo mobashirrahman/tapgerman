@@ -65,7 +65,7 @@ jobs:
       - name: Build the store zip
         run: npm run package
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: lexicue-unpacked-${{ github.sha }}
           path: dist/*.zip
