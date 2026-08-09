@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LexiCue Demo Player</title>
+    <link rel="stylesheet" href="demo.css" />
+  </head>
+  <body>
+    <header>
+      <span class="logo">LC</span>
+      <div><strong>LexiCue demo player</strong><small>No Prime account or subtitle files required.</small></div>
+    </header>
+    <main>
+      <section class="player-shell">
+        <video controls loop muted autoplay playsinline crossorigin="anonymous" poster="">
+          <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4" />
+        </video>
+      </section>
+      <aside>
+        <p class="eyebrow">TRY THE INTERACTION</p>
+        <h1>Click any German word in the upper subtitle.</h1>
+        <p>The built-in sample cycles through German and English cues. Test the structured dictionary, local word list, native-line concealment, replay shortcut, and Anki handoff.</p>
+        <ol>
+          <li>Press play if the sample does not autoplay.</li>
+          <li>Hover the upper line to pause.</li>
+          <li>Click <em>Blumen</em>, <em>Garten</em>, or another word.</li>
+          <li>Use the LexiCue toolbar popup to change styling.</li>
+        </ol>
+        <p class="note">The flower video is a CC0 sample hosted by MDN. LexiCue does not inspect its video bytes.</p>
+      </aside>
+    </main>
+    <script src="content.js"></script>
+    <script src="demo.js"></script>
+  </body>
+</html>

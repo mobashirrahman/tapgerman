@@ -1,0 +1,6 @@
+.DS_Store
+*.zip
+coverage/
+dist/
+node_modules/
+.claude/settings.local.json

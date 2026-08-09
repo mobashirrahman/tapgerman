@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LexiCue</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="brand-mark" aria-hidden="true"><span>LC</span></div>
+      <div>
+        <h1>LexiCue</h1>
+        <p>Turn an episode into a language lesson.</p>
+      </div>
+      <label class="switch" title="Enable LexiCue">
+        <input id="enabled" type="checkbox" />
+        <span></span>
+      </label>
+    </header>
+
+    <nav class="tabs" aria-label="LexiCue sections">
+      <button class="tab active" data-tab="watch" type="button">Watch</button>
+      <button class="tab" data-tab="words" type="button">Words <span id="word-count" class="count">0</span></button>
+      <button class="tab" data-tab="setup" type="button">Setup</button>
+    </nav>
+
+    <main>
+      <section id="tab-watch" class="panel active">
+        <div id="page-status" class="status-card">
+          <span class="status-dot"></span>
+          <div><strong>Checking Prime Video…</strong><small>Start playback to discover subtitle tracks.</small></div>
+        </div>
+
+        <div class="language-grid">
+          <label>
+            <span>Learning language · upper</span>
+            <select id="learning-language"></select>
+          </label>
+          <label>
+            <span>Your language · lower</span>
+            <select id="native-language"></select>
+            <small>English only in this MVP; structured dictionary glosses are English.</small>
+          </label>
+        </div>
+
+        <div class="field-group">
+          <label>
+            <span>Upper subtitle track</span>
+            <select id="learning-track"><option value="">Auto-detect / visible Prime subtitle</option></select>
+          </label>
+          <label>
+            <span>Lower subtitle track</span>
+            <select id="native-track"><option value="">Translate upper line when no track matches</option></select>
+          </label>
+        </div>
+
+        <div class="import-grid">
+          <label class="file-button">Import upper SRT/VTT/TTML<input id="learning-file" type="file" accept=".srt,.vtt,.ttml,.ttml2,.dfxp,.xml,text/vtt,application/xml" /></label>
+          <label class="file-button">Import lower SRT/VTT/TTML<input id="native-file" type="file" accept=".srt,.vtt,.ttml,.ttml2,.dfxp,.xml,text/vtt,application/xml" /></label>
+        </div>
+
+        <div class="toggles">
+          <label><input id="pause-on-hover" type="checkbox" /><span><strong>Pause on hover</strong><small>Stop playback while reading words.</small></span></label>
+          <label><input id="hide-native" type="checkbox" /><span><strong>Hide lower line</strong><small>Reveal it on hover for active recall.</small></span></label>
+          <label><input id="adaptive-speed" type="checkbox" /><span><strong>Slow down flagged words</strong><small>Ease playback for lines containing a word you saved.</small></span></label>
+          <label><input id="dictation-mode" type="checkbox" /><span><strong>Dictation mode</strong><small>Type each line before it's revealed, then see a diff.</small></span></label>
+        </div>
+
+        <div class="sliders">
+          <label><span>Subtitle size <output id="font-output">100%</output></span><input id="font-scale" type="range" min="0.7" max="1.6" step="0.05" /></label>
+          <label><span>Vertical position <output id="offset-output">+12 px</output></span><input id="vertical-offset" type="range" min="-80" max="180" step="2" /></label>
+          <div class="timing-grid">
+            <label><span>Upper timing <output id="learning-offset-output">0.0 s</output></span><input id="learning-offset" type="range" min="-5" max="5" step="0.1" /></label>
+            <label><span>Lower timing <output id="native-offset-output">0.0 s</output></span><input id="native-offset" type="range" min="-5" max="5" step="0.1" /></label>
+          </div>
+        </div>
+
+        <div class="shortcuts">
+          <span><kbd>Alt</kbd> + <kbd>R</kbd> replay line</span>
+          <span><kbd>Alt</kbd> + <kbd>←</kbd>/<kbd>→</kbd> previous/next</span>
+          <span><kbd>Alt</kbd> + <kbd>N</kbd> hide lower line</span>
+          <span><kbd>Alt</kbd> + <kbd>D</kbd> dictation mode</span>
+        </div>
+      </section>
+
+      <section id="tab-words" class="panel">
+        <div id="lapsed-panel" class="lapsed-panel" hidden>
+          <div class="section-head compact">
+            <div><h2>Struggling in Anki</h2><p>Cards you rated “Again” today. Jump back to the scene they came from.</p></div>
+          </div>
+          <div id="lapsed-list" class="lapsed-list"></div>
+        </div>
+        <div class="section-head">
+          <div><h2>Saved words</h2><p>Context-rich cards stay on this device.</p></div>
+          <button id="export-words" class="secondary" type="button">Export TSV</button>
+        </div>
+        <div id="vocabulary" class="vocabulary empty"><p>Click a word in the upper subtitle, then choose “Save word”.</p></div>
+      </section>
+
+      <section id="tab-setup" class="panel">
+        <div class="field-group">
+          <label>
+            <span>Translation fallback</span>
+            <select id="translation-provider">
+              <option value="mymemory">MyMemory (ready to use)</option>
+              <option value="libretranslate">LibreTranslate (open source)</option>
+              <option value="none">Off — use two subtitle tracks only</option>
+            </select>
+            <small>Used only when no lower-language track is available.</small>
+          </label>
+          <label class="libre-setting">
+            <span>LibreTranslate endpoint</span>
+            <select id="libre-endpoint">
+              <option value="http://127.0.0.1:5000">Local · http://127.0.0.1:5000</option>
+              <option value="http://localhost:5000">Local · http://localhost:5000</option>
+              <option value="https://libretranslate.com">Hosted · libretranslate.com</option>
+            </select>
+          </label>
+          <label class="libre-setting">
+            <span>LibreTranslate API key <em>optional for local</em></span>
+            <input id="libre-key" type="password" autocomplete="off" placeholder="Stored locally in this browser" />
+          </label>
+        </div>
+
+        <div class="anki-card">
+          <div class="section-head compact">
+            <div><h2>Anki</h2><p>Direct cards through the local AnkiConnect add-on.</p></div>
+            <span id="anki-badge" class="badge">Not tested</span>
+          </div>
+          <label><span>Deck name</span><input id="anki-deck" type="text" value="LexiCue" /></label>
+          <label>
+            <span>AnkiConnect API key <em>optional</em></span>
+            <input id="anki-api-key" type="password" autocomplete="off" placeholder="Stored locally in this browser" />
+            <small>Leave blank unless <code>apiKey</code> is enabled in the AnkiConnect add-on configuration.</small>
+          </label>
+          <button id="test-anki" class="primary" type="button">Test Anki connection</button>
+          <small>Install AnkiConnect add-on <strong>2055492159</strong>, restart Anki, keep it open, then approve LexiCue when testing.</small>
+        </div>
+
+        <div class="privacy-note">
+          <strong>Privacy boundary</strong>
+          <p>LexiCue reads timed-text subtitle data already exposed to your authorized browser session. It does not inspect video, Widevine, cookies, or DRM traffic. Dictionary lookups go to Kaikki; translation is sent only to the provider you choose.</p>
+        </div>
+        <button id="open-demo" class="secondary full" type="button">Open the built-in demo</button>
+      </section>
+    </main>
+
+    <footer><span id="save-state">Settings save automatically.</span><span id="version">v0.2.2</span></footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

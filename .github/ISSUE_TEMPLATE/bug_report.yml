@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in the extension does not work as described
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste subtitle files, account details, or API keys into this issue.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a Prime Video title with German subtitles
+        2. Enable the upper track in the popup
+        3. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where does it happen
+      options:
+        - Prime Video playback
+        - The built-in demo (Setup → Open the built-in demo)
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: From `chrome://extensions`, or the version field in extension/manifest.json.
+      placeholder: 0.2.2
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 141 on macOS 15
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Errors from the page console and, if relevant, from the service worker console.
+      render: text

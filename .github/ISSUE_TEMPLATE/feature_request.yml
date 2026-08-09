@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest a learning feature or an improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is hard today
+      description: Describe the learning problem, not only the solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations:
+      required: true
+
+  - type: input
+    id: languages
+    attributes:
+      label: Which language pair does this matter for
+      placeholder: German → English
+
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Product boundaries
+      description: See PRIVACY.md. Requests that cross these lines will not be built.
+      options:
+        - label: This does not require reading video, audio, DRM, cookie, or authentication data.
+          required: true
+        - label: This does not require bulk-exporting subtitles or transcripts.
+          required: true
