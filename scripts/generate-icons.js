@@ -1,7 +1,7 @@
 // Draws the LexiCue toolbar/store icons from scratch so the repository needs no binary design
 // source and no image dependency. Run `npm run icons` after changing the artwork below.
-import { mkdir, writeFile } from "node:fs/promises";
-import { deflateSync } from "node:zlib";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { deflateSync, inflateSync } from "node:zlib";
 import { crc32 } from "./lib/crc32.js";
 
 const SIZES = [16, 32, 48, 128];
@@ -120,9 +120,42 @@ function encodePng(size, rgba) {
   ]);
 }
 
-await mkdir(OUT_DIR, { recursive: true });
-for (const size of SIZES) {
-  const file = new URL(`icon-${size}.png`, OUT_DIR);
-  await writeFile(file, encodePng(size, renderRgba(size)));
-  console.log(`Wrote extension/icons/icon-${size}.png`);
+/** Raw (unfiltered) scanlines of a PNG this script wrote. */
+function decodeRaw(png) {
+  if (!png.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    throw new Error("Not a PNG file.");
+  }
+  const parts = [];
+  let offset = 8;
+  while (offset < png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString("ascii", offset + 4, offset + 8);
+    if (type === "IDAT") parts.push(png.subarray(offset + 8, offset + 8 + length));
+    if (type === "IEND") break;
+    offset += 12 + length;
+  }
+  return inflateSync(Buffer.concat(parts));
+}
+
+const expected = new Map(SIZES.map((size) => [size, encodePng(size, renderRgba(size))]));
+
+// zlib's compressed output is not identical across Node builds, so the drift check compares the
+// decoded pixels rather than the file bytes.
+if (process.argv.includes("--check")) {
+  for (const size of SIZES) {
+    const committed = await readFile(new URL(`icon-${size}.png`, OUT_DIR));
+    if (!decodeRaw(committed).equals(decodeRaw(expected.get(size)))) {
+      console.error(
+        `extension/icons/icon-${size}.png does not match scripts/generate-icons.js. Run \`npm run icons\`.`
+      );
+      process.exitCode = 1;
+    }
+  }
+  if (!process.exitCode) console.log(`Icons match their generator: ${SIZES.join(", ")} px.`);
+} else {
+  await mkdir(OUT_DIR, { recursive: true });
+  for (const size of SIZES) {
+    await writeFile(new URL(`icon-${size}.png`, OUT_DIR), expected.get(size));
+    console.log(`Wrote extension/icons/icon-${size}.png`);
+  }
 }

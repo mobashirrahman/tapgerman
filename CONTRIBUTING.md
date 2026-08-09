@@ -34,7 +34,7 @@ npm run verify   # manifest/permission checks plus the full test suite
 npm run package  # optional: confirm the store zip still builds
 ```
 
-CI runs the same commands on Node 20, 22, and 24, and additionally regenerates the icons to confirm the committed PNGs still match `scripts/generate-icons.js`. If you change the artwork, run `npm run icons` and commit the result.
+CI runs the same commands on Node 20, 22, and 24, and additionally runs `npm run icons:check`, which re-renders the artwork and compares pixels against the committed PNGs. If you change the artwork, run `npm run icons` and commit the result. (The check compares decoded pixels rather than file bytes, because zlib's compressed output is not identical across Node builds.)
 
 ## Things to keep in mind
 

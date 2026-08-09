@@ -90,6 +90,7 @@ npm run verify    # manifest/permission checks plus the full test suite
 npm test          # node:test suites only
 npm run check     # manifest, icon, and version-sync checks only
 npm run icons     # regenerate extension/icons/*.png from scripts/generate-icons.js
+npm run icons:check  # confirm the committed PNGs still match the generator (pixel comparison)
 npm run package   # build dist/lexicue-dual-subtitles-<version>.zip for the store
 ```
 
