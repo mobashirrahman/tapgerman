@@ -1,18 +1,18 @@
 {
-  "name": "lexicue-dual-subtitles",
+  "name": "lingodeck",
   "version": "0.2.2",
   "description": "Chromium extension for Prime Video dual subtitles, structured word lookup, and Anki.",
   "private": true,
   "type": "module",
   "license": "MIT",
   "author": "Md Mobashir Rahman",
-  "homepage": "https://github.com/mobashirrahman/lexicue-dual-subtitles",
+  "homepage": "https://github.com/mobashirrahman/lingodeck",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mobashirrahman/lexicue-dual-subtitles.git"
+    "url": "git+https://github.com/mobashirrahman/lingodeck.git"
   },
   "bugs": {
-    "url": "https://github.com/mobashirrahman/lexicue-dual-subtitles/issues"
+    "url": "https://github.com/mobashirrahman/lingodeck/issues"
   },
   "engines": {
     "node": ">=20"

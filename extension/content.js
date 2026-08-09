@@ -1,5 +1,5 @@
 (() => {
-  const PAGE_CHANNEL = "lexicue-page-v1";
+  const PAGE_CHANNEL = "lingodeck-page-v1";
   const state = {
     settings: {
       enabled: true,
@@ -99,7 +99,7 @@
           return;
         }
         if (!response?.ok) {
-          reject(new Error(response?.error || "LexiCue request failed."));
+          reject(new Error(response?.error || "LingoDeck request failed."));
           return;
         }
         resolve(response);
@@ -110,7 +110,7 @@
   function injectOverlay() {
     if (state.host?.isConnected) return;
     const host = document.createElement("div");
-    host.id = "lexicue-root";
+    host.id = "lingodeck-root";
     host.style.cssText = "position:fixed;inset:0;z-index:2147483646;pointer-events:none;contain:layout style;";
     const root = host.attachShadow({ mode: "closed" });
     root.innerHTML = `
@@ -160,7 +160,7 @@
         @media (max-width:700px){.learning{font-size:calc(22px * var(--pl-scale,1))}.native{font-size:calc(17px * var(--pl-scale,1))}.subtitles{width:96vw}}
       </style>
       <div class="stage">
-        <div class="status"><span class="dot"></span><span class="status-text">LexiCue ready</span></div>
+        <div class="status"><span class="dot"></span><span class="status-text">LingoDeck ready</span></div>
         <div class="subtitles" aria-live="polite">
           <div class="line learning" lang="de"></div>
           <div class="dictation" hidden>
@@ -562,9 +562,9 @@
   function detectNativeCaption() {
     if (!isSupportedPlayerRoute()) return;
     if (!state.settings.enabled) {
-      document.querySelectorAll("[data-lexicue-observed='true']").forEach((node) => {
+      document.querySelectorAll("[data-lingodeck-observed='true']").forEach((node) => {
         node.style.removeProperty("opacity");
-        delete node.dataset.lexicueObserved;
+        delete node.dataset.lingodeckObserved;
       });
       state.domCueText = "";
       return;
@@ -585,7 +585,7 @@
       });
       if (visible) {
         text = visible.textContent.replace(/\s+/g, " ").trim();
-        visible.dataset.lexicueObserved = "true";
+        visible.dataset.lingodeckObserved = "true";
         visible.style.opacity = "0";
         break;
       }
@@ -934,7 +934,7 @@
       state.successfulUrls.add(url);
       addTrack(track);
     } catch (error) {
-      console.debug("LexiCue ignored a subtitle-shaped resource:", error.message);
+      console.debug("LingoDeck ignored a subtitle-shaped resource:", error.message);
     } finally {
       if (state.captureInFlightUrls.get(url) === generation) state.captureInFlightUrls.delete(url);
     }
@@ -967,7 +967,7 @@
         state.successfulUrls.add(metadata.url);
         addTrack(track);
       } catch (error) {
-        console.debug("LexiCue could not load a declared subtitle track:", error.message);
+        console.debug("LingoDeck could not load a declared subtitle track:", error.message);
       } finally {
         if (state.inFlightUrls.get(metadata.url) === generation) state.inFlightUrls.delete(metadata.url);
       }
@@ -990,7 +990,7 @@
     state.manifestTracks = sanitizeManifestTracks(data.tracks);
     if (!state.manifestTracks.length) return;
     showStatus(
-      `LexiCue found ${state.manifestTracks.length} subtitle track${state.manifestTracks.length === 1 ? "" : "s"}`
+      `LingoDeck found ${state.manifestTracks.length} subtitle track${state.manifestTracks.length === 1 ? "" : "s"}`
     );
     loadPreferredManifestTracks();
   }
@@ -1185,7 +1185,7 @@
       refreshTimers();
       if (!state.readyAnnounced) {
         state.readyAnnounced = true;
-        showStatus("LexiCue ready · turn on target-language subtitles");
+        showStatus("LingoDeck ready · turn on target-language subtitles");
       }
     })();
     try {

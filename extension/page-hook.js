@@ -1,5 +1,5 @@
 (() => {
-  const CHANNEL = "lexicue-page-v1";
+  const CHANNEL = "lingodeck-page-v1";
   const MAX_SUBTITLE_BYTES = 4 * 1024 * 1024;
   const MAX_MANIFEST_BYTES = 4 * 1024 * 1024;
   const MAX_TRACKS = 32;
@@ -64,7 +64,7 @@
   for (const method of ["pushState", "replaceState"]) {
     const nativeMethod = history[method];
     if (typeof nativeMethod !== "function") continue;
-    history[method] = function lexicueHistoryChange(...args) {
+    history[method] = function lingodeckHistoryChange(...args) {
       const result = nativeMethod.apply(this, args);
       queueMicrotask(publishRouteChange);
       return result;
@@ -137,7 +137,7 @@
 
   const nativeFetch = window.fetch;
   if (typeof nativeFetch === "function") {
-    window.fetch = async function lexicueFetch(...args) {
+    window.fetch = async function lingodeckFetch(...args) {
       const requestPageKey = currentPageKey();
       const response = await nativeFetch.apply(this, args);
       try {
@@ -167,20 +167,20 @@
     const nativeOpen = NativeXHR.prototype.open;
     const nativeSend = NativeXHR.prototype.send;
 
-    NativeXHR.prototype.open = function lexicueOpen(method, url, ...rest) {
-      this.__lexicueUrl = String(url || "");
-      this.__lexicuePageKey = currentPageKey();
+    NativeXHR.prototype.open = function lingodeckOpen(method, url, ...rest) {
+      this.__lingodeckUrl = String(url || "");
+      this.__lingodeckPageKey = currentPageKey();
       return nativeOpen.call(this, method, url, ...rest);
     };
 
-    NativeXHR.prototype.send = function lexicueSend(...args) {
+    NativeXHR.prototype.send = function lingodeckSend(...args) {
       this.addEventListener(
         "load",
         () => {
           try {
             if (!isSupportedPlayerRoute()) return;
             const contentType = this.getResponseHeader("content-type") || "";
-            const responseUrl = this.responseURL || this.__lexicueUrl;
+            const responseUrl = this.responseURL || this.__lingodeckUrl;
             const shouldReadSubtitle = looksLikeSubtitle(responseUrl, contentType);
             const shouldReadManifest = String(responseUrl).includes("GetVodPlaybackResources");
             if (!shouldReadSubtitle && !shouldReadManifest) return;
@@ -194,10 +194,10 @@
               shouldReadSubtitle &&
               responseBody
             ) {
-              publish(responseUrl, responseBody, contentType, this.__lexicuePageKey);
+              publish(responseUrl, responseBody, contentType, this.__lingodeckPageKey);
             }
             if (shouldReadManifest) {
-              publishManifest(responseUrl, responseBody, this.__lexicuePageKey);
+              publishManifest(responseUrl, responseBody, this.__lingodeckPageKey);
             }
           } catch {
             // Some XHR responses do not expose responseText; ignore them.

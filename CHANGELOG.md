@@ -8,13 +8,14 @@ All notable changes to this project are documented here. This project follows [S
 
 - Repository packaging for publication: GitHub Actions CI (checks and tests on Node 20/22/24), a tag-driven release workflow that attaches the store zip, and a GitHub Pages landing page under `site/`.
 - Generated toolbar and store icons at 16/32/48/128 px, produced by `scripts/generate-icons.js` and verified in CI.
-- `npm run package`, which builds `dist/lexicue-dual-subtitles-<version>.zip` with no third-party dependency.
+- `npm run package`, which builds `dist/lingodeck-<version>.zip` with no third-party dependency.
 - Contribution, security, and privacy documentation.
 
 ### Changed
 
 - Everything that ships to the browser now lives in `extension/`. Load unpacked from that directory instead of the repository root.
 - `npm run check` additionally verifies that the manifest declares the required icons and that `package.json` and the manifest carry the same version.
+- Renamed the project from LexiCue to **LingoDeck**, including the GitHub repository (now `mobashirrahman/lingodeck`). If you tested an earlier LexiCue build against a real Anki collection, note that this changes several identifiers baked into Anki: the note type (`LexiCue Context v2` → `LingoDeck Context v2`), the default deck name (`LexiCue` → `LingoDeck`), the `lexicue` tag (→ `lingodeck`), and the `StableId` prefix (`lexicue-v1-` → `lingodeck-v1-`). Reinstalling will create new notes alongside any old ones rather than updating them in place; delete the old note type/deck manually if you don't want to keep both.
 
 ## [0.2.2] - 2026-08-09
 

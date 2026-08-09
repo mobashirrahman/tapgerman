@@ -1,5 +1,5 @@
 const ANKI_URL = "http://127.0.0.1:8765";
-export const ANKI_MODEL = "LexiCue Context v2";
+export const ANKI_MODEL = "LingoDeck Context v2";
 export const ANKI_CARD_TEMPLATE = "Recognition";
 export const ANKI_FIELDS = [
   "StableId",
@@ -97,7 +97,7 @@ export function buildAnkiStableId(card) {
   const grammar = normalizeStablePart(card.grammar || card.partOfSpeech);
   const context = normalizeStablePart(card.sentence);
   const identity = JSON.stringify([normalizeStablePart(card.languageCode || "unknown"), lemma, surface, sense, grammar, context]);
-  return `lexicue-v1-${hashStableKey(identity)}`;
+  return `lingodeck-v1-${hashStableKey(identity)}`;
 }
 
 export function buildLanguageTag(languageCode) {
@@ -139,7 +139,7 @@ export async function invokeAnki(action, params = {}, apiKey = "") {
       if (error?.name === "AbortError") throw new Error("AnkiConnect did not respond within 8 seconds.");
       throw new Error(
         "Cannot reach AnkiConnect. Confirm Anki is open with add-on 2055492159 installed. " +
-          "On Chrome/Edge 142+ you must also allow this extension to reach your local network: open LexiCue " +
+          "On Chrome/Edge 142+ you must also allow this extension to reach your local network: open LingoDeck " +
           "from the extension's Options entry (not the toolbar popup) and approve the local network prompt."
       );
     }
@@ -172,7 +172,7 @@ export async function requestAnkiPermission() {
   return normalizeAnkiPermission(await invokeAnki("requestPermission"));
 }
 
-export async function ensureLexiCueModel(deckName = "LexiCue", apiKey = "") {
+export async function ensureLingoDeckModel(deckName = "LingoDeck", apiKey = "") {
   const [models] = await Promise.all([
     invokeAnki("modelNames", {}, apiKey),
     invokeAnki("createDeck", { deck: deckName }, apiKey)
@@ -215,11 +215,11 @@ function buildMeaning(card) {
   return `<ol class="senses">${glosses.map((gloss) => `<li>${escapeHtml(gloss)}</li>`).join("")}</ol>`;
 }
 
-export function buildAnkiNote(card, deckName = "LexiCue", audioTag = "") {
+export function buildAnkiNote(card, deckName = "LingoDeck", audioTag = "") {
   // Repeating the lemma when it matches the surface form is noise, and it makes the template's
   // {{#Lemma}} conditional meaningful instead of always true.
   const lemmaDiffers = card.lemma && normalizeStablePart(card.lemma) !== normalizeStablePart(card.word);
-  const tags = ["lexicue", buildLanguageTag(card.languageCode), buildSenseTag(card)];
+  const tags = ["lingodeck", buildLanguageTag(card.languageCode), buildSenseTag(card)];
   const partOfSpeech = String(card.partOfSpeech || "").toLowerCase().replace(/[^a-z]/g, "");
   if (partOfSpeech) tags.push(`pos::${partOfSpeech}`);
   return {
@@ -235,7 +235,7 @@ export function buildAnkiNote(card, deckName = "LexiCue", audioTag = "") {
       Sentence: highlightSurface(card.sentence, card.word, card.lemma),
       Translation: escapeHtml(card.translation),
       Grammar: escapeHtml(card.grammar || card.partOfSpeech || ""),
-      Source: escapeHtml(card.source || "Prime Video via LexiCue")
+      Source: escapeHtml(card.source || "Prime Video via LingoDeck")
     },
     options: { allowDuplicate: false, duplicateScope: "deck" },
     tags
@@ -290,7 +290,7 @@ async function storeCardAudio(card, apiKey) {
       }
       // Pronunciation is a bonus; a media failure must not block saving the card. It is still
       // worth reporting, or a card silently arrives without audio and nothing explains why.
-      console.warn(`LexiCue could not attach pronunciation audio for "${card.word}":`, error.message);
+      console.warn(`LingoDeck could not attach pronunciation audio for "${card.word}":`, error.message);
       return "";
     }
   }
@@ -300,7 +300,7 @@ async function storeCardAudio(card, apiKey) {
 // Surface-or-Lemma field match) rather than by StableId, since StableId bakes in sentence context
 // and would never match a repeat save in a new sentence. Uses notesInfo's own `query` parameter so
 // a match costs one round trip instead of a separate findNotes call.
-export async function findExistingAnkiNote(card, deckName = "LexiCue", apiKey = "") {
+export async function findExistingAnkiNote(card, deckName = "LingoDeck", apiKey = "") {
   const key = escapeAnkiSearchValue(normalizeStablePart(card.lemma || card.word));
   if (!key) return null;
   const query = [
@@ -363,8 +363,8 @@ export async function appendSentenceToNote(existingNote, card, apiKey = "") {
   return { noteId, appended: true };
 }
 
-export async function addCardToAnki(card, deckName = "LexiCue", apiKey = "") {
-  await ensureLexiCueModel(deckName, apiKey);
+export async function addCardToAnki(card, deckName = "LingoDeck", apiKey = "") {
+  await ensureLingoDeckModel(deckName, apiKey);
   const existing = await findExistingAnkiNote(card, deckName, apiKey);
   if (existing) return appendSentenceToNote(existing, card, apiKey);
   const note = buildAnkiNote(card, deckName, await storeCardAudio(card, apiKey));
@@ -377,7 +377,7 @@ export async function addCardToAnki(card, deckName = "LexiCue", apiKey = "") {
 // Anki's `rated:N:1` search operator finds cards graded "Again" in the last N days — this is a
 // direct passthrough of Anki's own search syntax (findCards/findNotes hand off to Anki's native
 // query engine), not a bespoke lapse query.
-export async function findLapsedNoteIds(apiKey = "", { deckName = "LexiCue", days = 1 } = {}) {
+export async function findLapsedNoteIds(apiKey = "", { deckName = "LingoDeck", days = 1 } = {}) {
   const query = [
     `deck:"${escapeAnkiSearchValue(deckName)}"`,
     `note:"${escapeAnkiSearchValue(ANKI_MODEL)}"`,
@@ -405,7 +405,7 @@ export async function getAnkiStatus(apiKey = "") {
 export async function authorizeAnki(apiKey = "") {
   const permission = await requestAnkiPermission();
   if (permission.permission !== "granted") {
-    throw new Error("AnkiConnect access was denied. Click Test again and approve LexiCue in Anki.");
+    throw new Error("AnkiConnect access was denied. Click Test again and approve LingoDeck in Anki.");
   }
   if (permission.requireApiKey && !apiKey) {
     throw new Error("AnkiConnect requires an API key. Enter the key from its add-on configuration and test again.");

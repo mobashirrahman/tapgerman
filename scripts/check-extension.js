@@ -22,7 +22,7 @@ if (Number.parseInt(manifest.minimum_chrome_version, 10) < 111) {
 }
 if (!/^\d+\.\d+\.\d+$/.test(manifest.version)) throw new Error("Use a three-part extension version.");
 if (manifest.permissions?.includes("<all_urls>")) throw new Error("<all_urls> must not be requested as an API permission.");
-if (manifest.host_permissions?.includes("<all_urls>")) throw new Error("LexiCue must keep host permissions narrow.");
+if (manifest.host_permissions?.includes("<all_urls>")) throw new Error("LingoDeck must keep host permissions narrow.");
 for (const entry of manifest.content_scripts || []) {
   if ((entry.matches || []).some((pattern) => /amazon\.[^/]+\/\*$/.test(pattern))) {
     throw new Error("Content scripts must be scoped to Prime Video player routes, not every Amazon page.");

@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LexiCue — learn a language from Prime Video subtitles</title>
+<title>LingoDeck — learn a language from Prime Video subtitles</title>
 <meta name="description" content="An open-source Chromium extension that puts a clickable learning-language subtitle above your native one on Prime Video, defines any word in place, and sends it to Anki with the sentence it came from.">
 <meta name="color-scheme" content="dark light">
-<meta property="og:title" content="LexiCue — learn a language from Prime Video subtitles">
+<meta property="og:title" content="LingoDeck — learn a language from Prime Video subtitles">
 <meta property="og:description" content="Dual subtitles, click-to-define vocabulary, and one-click Anki cards on Prime Video. Open source, no accounts, no telemetry.">
 <meta property="og:type" content="website">
 <link rel="icon" href="icon-128.png" type="image/png">
@@ -438,7 +438,7 @@
   <div class="wrap bar">
     <a class="brand" href="#top">
       <img src="icon-128.png" alt="">
-      LexiCue
+      LingoDeck
     </a>
     <nav>
       <a href="#how">How it works</a>
@@ -447,7 +447,7 @@
       <a href="#privacy">Privacy</a>
     </nav>
     <button id="theme-toggle" type="button" aria-label="Switch between light and dark">◑</button>
-    <a class="btn btn-ghost" href="https://github.com/mobashirrahman/lexicue-dual-subtitles">GitHub</a>
+    <a class="btn btn-ghost" href="https://github.com/mobashirrahman/lingodeck">GitHub</a>
   </div>
 </header>
 
@@ -458,12 +458,12 @@
       <span class="eyebrow">Open source · Manifest V3 · No accounts</span>
       <h1>Watch Prime Video in the language you are learning.</h1>
       <p class="lede">
-        LexiCue puts a clickable learning-language subtitle above your native one, defines any word
+        LingoDeck puts a clickable learning-language subtitle above your native one, defines any word
         without leaving the scene, and sends it to Anki with the sentence it came from.
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="#install">Install from source</a>
-        <a class="btn btn-ghost" href="https://github.com/mobashirrahman/lexicue-dual-subtitles">Read the code</a>
+        <a class="btn btn-ghost" href="https://github.com/mobashirrahman/lingodeck">Read the code</a>
       </div>
       <p class="cta-note">German → English today. Chromium 111+. Not yet on the Chrome Web Store.</p>
     </div>
@@ -523,7 +523,7 @@
       <div class="steps">
         <div class="step">
           <h3>Turn on the subtitles you want</h3>
-          <p>LexiCue picks up the timed-text tracks the player already loaded, so both lines stay in sync with the video clock. If a track is missing, import an SRT, VTT, or TTML file instead.</p>
+          <p>LingoDeck picks up the timed-text tracks the player already loaded, so both lines stay in sync with the video clock. If a track is missing, import an SRT, VTT, or TTML file instead.</p>
         </div>
         <div class="step">
           <h3>Click a word you do not know</h3>
@@ -643,20 +643,20 @@
     <div class="wrap">
       <div class="section-head">
         <h2>Install it</h2>
-        <p>LexiCue is not on the Chrome Web Store yet, so it loads unpacked. It takes about a minute.</p>
+        <p>LingoDeck is not on the Chrome Web Store yet, so it loads unpacked. It takes about a minute.</p>
       </div>
       <div class="install">
         <div>
           <h3>The extension</h3>
           <ol>
-            <li>Download the latest zip from the <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/releases">releases page</a> and unzip it, or clone the repository.</li>
+            <li>Download the latest zip from the <a href="https://github.com/mobashirrahman/lingodeck/releases">releases page</a> and unzip it, or clone the repository.</li>
             <li>Open <code>chrome://extensions</code> in Chrome, Edge, Brave, or another Chromium 111+ browser.</li>
             <li>Enable <strong>Developer mode</strong>.</li>
             <li>Choose <strong>Load unpacked</strong> and select the unzipped folder — or the repository's <code>extension/</code> directory.</li>
             <li>Open a Prime Video title and start playback. Refresh the tab if it was already open.</li>
           </ol>
-          <pre><code>git clone https://github.com/mobashirrahman/lexicue-dual-subtitles.git
-cd lexicue-dual-subtitles
+          <pre><code>git clone https://github.com/mobashirrahman/lingodeck.git
+cd lingodeck
 npm run verify   # optional: checks and tests, no dependencies to install</code></pre>
         </div>
         <div>
@@ -665,7 +665,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
             <li>Install <a href="https://apps.ankiweb.net/">Anki Desktop</a>.</li>
             <li>In Anki, open <strong>Tools → Add-ons → Get Add-ons</strong> and install AnkiConnect with code <code>2055492159</code>.</li>
             <li>Restart Anki and leave it running.</li>
-            <li>In the LexiCue popup, open <strong>Setup</strong>, pick a deck name, and click <strong>Test Anki connection</strong>. Approve the permission dialog Anki shows.</li>
+            <li>In the LingoDeck popup, open <strong>Setup</strong>, pick a deck name, and click <strong>Test Anki connection</strong>. Approve the permission dialog Anki shows.</li>
           </ol>
           <p style="color: var(--ink-dim); font-size: 0.95rem;">
             No Anki running? <strong>Words → Export TSV</strong> gives you a UTF-8 file you can import through Anki's normal import dialog. And to try the overlay without signing in to Prime Video, open the popup and choose <strong>Setup → Open the built-in demo</strong>.
@@ -678,7 +678,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
   <section id="privacy">
     <div class="wrap">
       <div class="section-head">
-        <h2>What LexiCue does and does not touch</h2>
+        <h2>What LingoDeck does and does not touch</h2>
         <p>The extension reads timed text your browser session already has. That is the whole of its access.</p>
       </div>
       <div class="privacy">
@@ -725,7 +725,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
       </div>
 
       <p style="margin-top: 1.5rem; color: var(--ink-dim);">
-        The full text is in <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/blob/main/PRIVACY.md">PRIVACY.md</a>.
+        The full text is in <a href="https://github.com/mobashirrahman/lingodeck/blob/main/PRIVACY.md">PRIVACY.md</a>.
       </p>
     </div>
   </section>
@@ -744,7 +744,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
 
       <details>
         <summary>Will it break when Prime Video changes?</summary>
-        <p>Possibly. Prime's player internals are an unsupported integration surface, so automatic track capture lives behind a small replaceable adapter. When it fails, LexiCue falls back to the subtitle currently visible on the page, or to a file you import.</p>
+        <p>Possibly. Prime's player internals are an unsupported integration surface, so automatic track capture lives behind a small replaceable adapter. When it fails, LingoDeck falls back to the subtitle currently visible on the page, or to a file you import.</p>
       </details>
 
       <details>
@@ -758,7 +758,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
       </details>
 
       <details>
-        <summary>Is "LexiCue" the final name?</summary>
+        <summary>Is "LingoDeck" the final name?</summary>
         <p>No. It is a development codename with no trademark clearance behind it, and the public name will be chosen before any store release.</p>
       </details>
     </div>
@@ -770,16 +770,16 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <strong style="color: var(--ink);">LexiCue Dual Subtitles</strong><br>
+        <strong style="color: var(--ink);">LingoDeck Dual Subtitles</strong><br>
         MIT licensed. Dictionary content from Kaikki / English Wiktionary under its own terms.
       </div>
       <div class="footer-links">
-        <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles">Source</a>
-        <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/releases">Releases</a>
-        <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/issues">Issues</a>
-        <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/blob/main/CONTRIBUTING.md">Contributing</a>
-        <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/blob/main/PRIVACY.md">Privacy</a>
-        <a href="https://github.com/mobashirrahman/lexicue-dual-subtitles/blob/main/SECURITY.md">Security</a>
+        <a href="https://github.com/mobashirrahman/lingodeck">Source</a>
+        <a href="https://github.com/mobashirrahman/lingodeck/releases">Releases</a>
+        <a href="https://github.com/mobashirrahman/lingodeck/issues">Issues</a>
+        <a href="https://github.com/mobashirrahman/lingodeck/blob/main/CONTRIBUTING.md">Contributing</a>
+        <a href="https://github.com/mobashirrahman/lingodeck/blob/main/PRIVACY.md">Privacy</a>
+        <a href="https://github.com/mobashirrahman/lingodeck/blob/main/SECURITY.md">Security</a>
       </div>
     </div>
     <p class="disclaimer">
@@ -791,7 +791,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
 
 <script>
   const toggle = document.getElementById('theme-toggle');
-  const stored = localStorage.getItem('lexicue-theme');
+  const stored = localStorage.getItem('lingodeck-theme');
   if (stored) document.documentElement.dataset.theme = stored;
 
   toggle.addEventListener('click', () => {
@@ -800,7 +800,7 @@ npm run verify   # optional: checks and tests, no dependencies to install</code>
       : matchMedia('(prefers-color-scheme: dark)').matches;
     const next = dark ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
-    localStorage.setItem('lexicue-theme', next);
+    localStorage.setItem('lingodeck-theme', next);
   });
 </script>
 

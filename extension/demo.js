@@ -18,7 +18,7 @@
 
   function publish(url, body) {
     window.postMessage(
-      { source: "lexicue-page-v1", type: "subtitle-resource", url, contentType: "application/ttml+xml", body },
+      { source: "lingodeck-page-v1", type: "subtitle-resource", url, contentType: "application/ttml+xml", body },
       window.location.origin
     );
   }

@@ -346,14 +346,14 @@ function exportVocabulary() {
   if (!vocabulary.length) return setSaveState("There are no saved words to export.", true);
   const header = ["#separator:Tab", "#html:true", "#columns:Word\tMeaning\tSentence\tTranslation\tGrammar\tSource\tTags"];
   const rows = vocabulary.map((card) =>
-    [card.word, card.definitions?.join("\n") || card.meaning, card.sentence, card.translation, card.grammar, card.source, `lexicue language::${card.languageCode}`]
+    [card.word, card.definitions?.join("\n") || card.meaning, card.sentence, card.translation, card.grammar, card.source, `lingodeck language::${card.languageCode}`]
       .map(toAnkiTsvCell)
       .join("\t")
   );
   const url = URL.createObjectURL(new Blob([[...header, ...rows].join("\n")], { type: "text/tab-separated-values;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = `lexicue-anki-${new Date().toISOString().slice(0, 10)}.txt`;
+  link.download = `lingodeck-anki-${new Date().toISOString().slice(0, 10)}.txt`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -372,7 +372,7 @@ async function testAnki() {
     settings = saved.settings;
     if (permission.permission !== "granted") {
       throw new Error(
-        "AnkiConnect access was denied. Approve LexiCue in Anki; if no dialog appears, remove its origin from ignoreOriginList in the add-on configuration."
+        "AnkiConnect access was denied. Approve LingoDeck in Anki; if no dialog appears, remove its origin from ignoreOriginList in the add-on configuration."
       );
     }
     if (permission.requireApiKey && !settings.ankiApiKey) {

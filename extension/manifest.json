@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "LexiCue Dual Subtitles",
-  "short_name": "LexiCue",
+  "name": "LingoDeck Dual Subtitles",
+  "short_name": "LingoDeck",
   "version": "0.2.2",
   "description": "Learn languages on Prime Video with dual subtitles, click-to-define vocabulary, and Anki export.",
   "minimum_chrome_version": "111",
@@ -30,7 +30,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "LexiCue",
+    "default_title": "LingoDeck",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

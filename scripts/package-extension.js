@@ -96,7 +96,7 @@ if (!files.some((file) => file.path === "manifest.json")) {
 }
 
 await mkdir(fileURLToPath(DIST_DIR), { recursive: true });
-const outputName = `lexicue-dual-subtitles-${manifest.version}.zip`;
+const outputName = `lingodeck-${manifest.version}.zip`;
 const zip = buildZip(files);
 await writeFile(new URL(outputName, DIST_DIR), zip);
 

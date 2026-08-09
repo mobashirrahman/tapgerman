@@ -1,4 +1,4 @@
-// Draws the LexiCue toolbar/store icons from scratch so the repository needs no binary design
+// Draws the LingoDeck toolbar/store icons from scratch so the repository needs no binary design
 // source and no image dependency. Run `npm run icons` after changing the artwork below.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { deflateSync, inflateSync } from "node:zlib";

@@ -1,12 +1,12 @@
-# Contributing to LexiCue
+# Contributing to LingoDeck
 
-Thanks for looking at the project. LexiCue is a dependency-free Manifest V3 extension, so the setup is short.
+Thanks for looking at the project. LingoDeck is a dependency-free Manifest V3 extension, so the setup is short.
 
 ## Getting started
 
 ```bash
-git clone https://github.com/mobashirrahman/lexicue-dual-subtitles.git
-cd lexicue-dual-subtitles
+git clone https://github.com/mobashirrahman/lingodeck.git
+cd lingodeck
 npm run verify
 ```
 
@@ -50,4 +50,4 @@ CI runs the same commands on Node 20, 22, and 24, and additionally runs `npm run
 2. Add a `CHANGELOG.md` entry.
 3. Merge to `main`, then tag: `git tag v0.2.3 && git push origin v0.2.3`.
 
-The release workflow verifies that the tag matches the manifest version, runs the checks, builds `dist/lexicue-dual-subtitles-<version>.zip`, and attaches it to a generated GitHub release.
+The release workflow verifies that the tag matches the manifest version, runs the checks, builds `dist/lingodeck-<version>.zip`, and attaches it to a generated GitHub release.

@@ -1,4 +1,4 @@
-# Feature research: where LexiCue goes after the MVP
+# Feature research: where LingoDeck goes after the MVP
 
 **Research date:** 2026-08-09
 **Companion to:** [PRODUCT_RESEARCH.md](PRODUCT_RESEARCH.md) (2026-08-08), which established positioning and the competitive field. This document does not repeat that analysis. It answers a narrower question: *given what is now built, which features are worth building next?*
@@ -9,9 +9,9 @@ Claims about competitors reflect public documentation and store listings at the 
 
 One technical finding reshapes the roadmap: **media-rich cards containing video screenshots or show audio are not achievable on Prime Video**, and no amount of engineering changes that (see [The DRM ceiling](#the-drm-ceiling)). That is the single most prominent feature of the benchmark card-builders, and it is permanently out of reach for any DRM streaming source.
 
-This is clarifying rather than limiting. It means LexiCue cannot win by imitating Migaku, and should instead compete on three axes that DRM does not touch:
+This is clarifying rather than limiting. It means LingoDeck cannot win by imitating Migaku, and should instead compete on three axes that DRM does not touch:
 
-1. **Anki as a live data source, not just a destination.** Every competitor treats Anki as an export target. LexiCue already holds an authenticated loopback bridge to the user's collection, and can *read* it to drive a known-word model, i+1 sentence detection, and comprehension stats. This is the strongest available differentiator and it reuses infrastructure that already exists.
+1. **Anki as a live data source, not just a destination.** Every competitor treats Anki as an export target. LingoDeck already holds an authenticated loopback bridge to the user's collection, and can *read* it to drive a known-word model, i+1 sentence detection, and comprehension stats. This is the strongest available differentiator and it reuses infrastructure that already exists.
 2. **Reliability as a feature.** The dominant user complaint in this category is breakage, not missing features. A visible health report and a fixture-tested adapter address the thing users actually abandon products over.
 3. **German-first linguistic depth.** Separable verbs, compounds, and phrase selection are areas where the market leader is explicitly weak.
 
@@ -57,7 +57,7 @@ Query the user's collection over the existing bridge and classify every subtitle
 This inverts the usual relationship with Anki and is only cheap because the loopback bridge, the permission flow, and the lemma field already exist. asbplayer does something similar; no Prime-first tool does.
 
 **2. i+1 sentence detection.** *(Small effort once #1 exists, very high learning value.)*
-Sentence mining's core principle is to mine lines containing exactly one unknown item — [capture the full sentence, pause only when it has one useful unknown word](https://subsmith.app/blog/sentence-mining-guide). With a known-word model and the existing tokenizer, LexiCue can mark those cues in the overlay and let the user jump between them. This converts passive watching into targeted mining and is the feature most likely to make the product feel materially smarter than a dictionary overlay.
+Sentence mining's core principle is to mine lines containing exactly one unknown item — [capture the full sentence, pause only when it has one useful unknown word](https://subsmith.app/blog/sentence-mining-guide). With a known-word model and the existing tokenizer, LingoDeck can mark those cues in the overlay and let the user jump between them. This converts passive watching into targeted mining and is the feature most likely to make the product feel materially smarter than a dictionary overlay.
 
 **3. Health and diagnostics report.** *(Small effort, addresses the top abandonment cause.)*
 Store reviews across this category describe extensions that work on one title and not the next, with duplicated or missing subtitle layers; one user summarised a leading Prime tool as buggy but still better than the alternatives. A copyable, non-sensitive report — adapter version, domain, video found, track count and formats, last parser error — turns an unreproducible complaint into a fixable bug. Pair it with captured JSON/TTML fixtures and a canary test, per P1.
@@ -103,7 +103,7 @@ A second template on the existing note type, offered as a setting. Cloze is the 
 
 1. **Word-level or context-level cards?** Still unresolved from the card work. It determines whether `StableId` or `Surface` leads the note type, and whether a repeated word appends a sentence or creates a second card.
 2. **How much dictionary data ships locally?** Gates the frequency, CEFR, and offline items.
-3. **Does the known-word model read the whole collection or only the LexiCue deck?** Whole-collection is far more accurate and is what makes i+1 trustworthy, but it means reading notes the extension did not create — a privacy posture worth stating explicitly in the README before shipping.
+3. **Does the known-word model read the whole collection or only the LingoDeck deck?** Whole-collection is far more accurate and is what makes i+1 trustworthy, but it means reading notes the extension did not create — a privacy posture worth stating explicitly in the README before shipping.
 
 ## Sources
 
