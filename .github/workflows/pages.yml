@@ -20,6 +20,9 @@ jobs:
     name: Publish site/ to GitHub Pages
     runs-on: ubuntu-latest
     permissions:
+      # Job-level permissions replace the workflow-level block outright, so contents: read has to
+      # be repeated here or checkout cannot read a private repository.
+      contents: read
       pages: write
       id-token: write
     environment:
