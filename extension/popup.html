@@ -14,19 +14,19 @@
         <p>Turn an episode into a language lesson.</p>
       </div>
       <label class="switch" title="Enable LingoDeck">
-        <input id="enabled" type="checkbox" />
+        <input id="enabled" type="checkbox" aria-label="Enable LingoDeck" />
         <span></span>
       </label>
     </header>
 
-    <nav class="tabs" aria-label="LingoDeck sections">
-      <button class="tab active" data-tab="watch" type="button">Watch</button>
-      <button class="tab" data-tab="words" type="button">Words <span id="word-count" class="count">0</span></button>
-      <button class="tab" data-tab="setup" type="button">Setup</button>
+    <nav class="tabs" aria-label="LingoDeck sections" role="tablist">
+      <button class="tab active" data-tab="watch" type="button" role="tab" id="tab-watch-button" aria-selected="true" aria-controls="tab-watch">Watch</button>
+      <button class="tab" data-tab="words" type="button" role="tab" id="tab-words-button" aria-selected="false" aria-controls="tab-words">Words <span id="word-count" class="count">0</span></button>
+      <button class="tab" data-tab="setup" type="button" role="tab" id="tab-setup-button" aria-selected="false" aria-controls="tab-setup">Setup</button>
     </nav>
 
     <main>
-      <section id="tab-watch" class="panel active">
+      <section id="tab-watch" class="panel active" role="tabpanel" aria-labelledby="tab-watch-button">
         <div id="page-status" class="status-card">
           <span class="status-dot"></span>
           <div><strong>Checking Prime Video…</strong><small>Start playback to discover subtitle tracks.</small></div>
@@ -56,8 +56,8 @@
         </div>
 
         <div class="import-grid">
-          <label class="file-button">Import upper SRT/VTT/TTML<input id="learning-file" type="file" accept=".srt,.vtt,.ttml,.ttml2,.dfxp,.xml,text/vtt,application/xml" /></label>
-          <label class="file-button">Import lower SRT/VTT/TTML<input id="native-file" type="file" accept=".srt,.vtt,.ttml,.ttml2,.dfxp,.xml,text/vtt,application/xml" /></label>
+          <label class="file-button" tabindex="0" for="learning-file">Import upper SRT/VTT/TTML<input id="learning-file" type="file" accept=".srt,.vtt,.ttml,.ttml2,.dfxp,.xml,text/vtt,application/xml" /></label>
+          <label class="file-button" tabindex="0" for="native-file">Import lower SRT/VTT/TTML<input id="native-file" type="file" accept=".srt,.vtt,.ttml,.ttml2,.dfxp,.xml,text/vtt,application/xml" /></label>
         </div>
 
         <div class="toggles">
@@ -84,7 +84,7 @@
         </div>
       </section>
 
-      <section id="tab-words" class="panel">
+      <section id="tab-words" class="panel" role="tabpanel" aria-labelledby="tab-words-button">
         <div id="lapsed-panel" class="lapsed-panel" hidden>
           <div class="section-head compact">
             <div><h2>Struggling in Anki</h2><p>Cards you rated “Again” today. Jump back to the scene they came from.</p></div>
@@ -98,7 +98,7 @@
         <div id="vocabulary" class="vocabulary empty"><p>Click a word in the upper subtitle, then choose “Save word”.</p></div>
       </section>
 
-      <section id="tab-setup" class="panel">
+      <section id="tab-setup" class="panel" role="tabpanel" aria-labelledby="tab-setup-button">
         <div class="field-group">
           <label>
             <span>Translation fallback</span>
@@ -111,11 +111,8 @@
           </label>
           <label class="libre-setting">
             <span>LibreTranslate endpoint</span>
-            <select id="libre-endpoint">
-              <option value="http://127.0.0.1:5000">Local · http://127.0.0.1:5000</option>
-              <option value="http://localhost:5000">Local · http://localhost:5000</option>
-              <option value="https://libretranslate.com">Hosted · libretranslate.com</option>
-            </select>
+            <input id="libre-endpoint" type="text" placeholder="http://127.0.0.1:5000" />
+            <small>Local http://127.0.0.1 or http://localhost on any port (Docker defaults to :8000), or https://libretranslate.com.</small>
           </label>
           <label class="libre-setting">
             <span>LibreTranslate API key <em>optional for local</em></span>
@@ -142,11 +139,12 @@
           <strong>Privacy boundary</strong>
           <p>LingoDeck reads timed-text subtitle data already exposed to your authorized browser session. It does not inspect video, Widevine, cookies, or DRM traffic. Dictionary lookups go to Kaikki; translation is sent only to the provider you choose.</p>
         </div>
+        <button id="copy-diagnostics" class="secondary full" type="button">Copy diagnostics</button>
         <button id="open-demo" class="secondary full" type="button">Open the built-in demo</button>
       </section>
     </main>
 
-    <footer><span id="save-state">Settings save automatically.</span><span id="version">v0.2.2</span></footer>
+    <footer><span id="save-state" role="status">Settings save automatically.</span><span id="version">v0.2.2</span></footer>
     <script type="module" src="popup.js"></script>
   </body>
 </html>

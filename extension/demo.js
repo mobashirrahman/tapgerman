@@ -28,6 +28,21 @@
     publish(`${location.origin}/demo-en.ttml`, english);
   }, 500);
 
+  // The overlay only listens while it is active, and page-hook's successfulUrls set runs in the
+  // content script — a re-publish is harmless there but vital when activation lands late (e.g.
+  // the extension was reloaded after the demo page already opened). Republish for a bounded
+  // window, then stop.
+  let republishCount = 0;
+  const republishTimer = setInterval(() => {
+    republishCount += 1;
+    if (republishCount > 6) {
+      clearInterval(republishTimer);
+      return;
+    }
+    publish(`${location.origin}/demo-de.ttml`, german);
+    publish(`${location.origin}/demo-en.ttml`, english);
+  }, 1000);
+
   const video = document.querySelector("video");
   video?.addEventListener("timeupdate", () => {
     if (video.currentTime >= 14.9) video.currentTime = 0;

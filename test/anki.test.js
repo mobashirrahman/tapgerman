@@ -118,6 +118,19 @@ test("escapes HTML in TSV fields before preserving line breaks", () => {
   assert.equal(toAnkiTsvCell("<script>bad()</script>\tline 1\nline 2"), "&lt;script&gt;bad()&lt;/script&gt; line 1<br>line 2");
 });
 
+test("prefixes an apostrophe when a TSV cell could execute as a spreadsheet formula", () => {
+  assert.equal(toAnkiTsvCell("=1+1"), "'=1+1");
+  assert.equal(toAnkiTsvCell("+SUM(A1:A2)"), "'+SUM(A1:A2)");
+  assert.equal(toAnkiTsvCell("-2 + 3"), "'-2 + 3");
+  assert.equal(toAnkiTsvCell("@cmd"), "'@cmd");
+  // Leading whitespace does not shield the formula: sheets evaluate trimmed leading = too.
+  assert.equal(toAnkiTsvCell("  =HYPERLINK(\"http://evil\")"), "'  =HYPERLINK(&quot;http://evil&quot;)");
+  // Ordinary text, negative-looking words mid-string, and escapes stay untouched.
+  assert.equal(toAnkiTsvCell("Haus"), "Haus");
+  assert.equal(toAnkiTsvCell("a=b"), "a=b");
+  assert.equal(toAnkiTsvCell("Geben &amp; nehmen"), "Geben &amp;amp; nehmen");
+});
+
 test("requests origin permission before making authenticated status calls", async (context) => {
   const originalFetch = globalThis.fetch;
   const requests = [];

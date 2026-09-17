@@ -89,20 +89,32 @@ function ankiApiKeyFor(settings) {
   return settings.ankiApiKeyRequired ? settings.ankiApiKey : "";
 }
 
+// Every read-modify-write of shared chrome.storage state (vocabulary, translation cache) runs
+// through this mutex: service-worker message handlers interleave at every await, so a rapid
+// Save + Send-to-Anki pair would otherwise both read the same list and one write would be lost.
+let vocabMutex = Promise.resolve();
+function withVocabMutex(fn) {
+  const result = vocabMutex.then(fn, fn);
+  vocabMutex = result.catch(() => {});
+  return result;
+}
+
 // Shared by SAVE_WORD and ADD_TO_ANKI, so a card sent to Anki always has a local vocabulary
 // record too — lapse rescue needs the sourceUrl/sourceTimeSeconds it carries, and the two buttons
 // are independent (a card can be sent to Anki without ever clicking "Save word").
 async function upsertVocabulary(card) {
-  const item = { ...card, id: card.id || buildAnkiStableId(card), savedAt: Date.now() };
-  const stored = await chrome.storage.local.get("vocabulary");
-  const vocabulary = Array.isArray(stored.vocabulary) ? stored.vocabulary : [];
-  const duplicateIndex = vocabulary.findIndex((entry) => entry.id === item.id);
-  if (duplicateIndex >= 0) vocabulary[duplicateIndex] = { ...vocabulary[duplicateIndex], ...item };
-  else vocabulary.unshift(item);
-  const bounded = vocabulary.slice(0, 2000);
-  while (JSON.stringify(bounded).length > 4 * 1024 * 1024) bounded.pop();
-  await chrome.storage.local.set({ vocabulary: bounded });
-  return item;
+  return withVocabMutex(async () => {
+    const item = { ...card, id: card.id || buildAnkiStableId(card), savedAt: Date.now() };
+    const stored = await chrome.storage.local.get("vocabulary");
+    const vocabulary = Array.isArray(stored.vocabulary) ? stored.vocabulary : [];
+    const duplicateIndex = vocabulary.findIndex((entry) => entry.id === item.id);
+    if (duplicateIndex >= 0) vocabulary[duplicateIndex] = { ...vocabulary[duplicateIndex], ...item };
+    else vocabulary.unshift(item);
+    const bounded = vocabulary.slice(0, 2000);
+    while (JSON.stringify(bounded).length > 4 * 1024 * 1024) bounded.pop();
+    await chrome.storage.local.set({ vocabulary: bounded });
+    return item;
+  });
 }
 
 if (typeof chrome.storage.local.setAccessLevel === "function") {
@@ -122,6 +134,14 @@ function normalizeLanguageCode(value, fallback = "und") {
   return /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/.test(code) ? code : fallback;
 }
 
+// https://libretranslate.com is the only hosted endpoint; plain http loopback is allowed on any
+// port (Docker defaults to :8000, not :5000) with an optional path for reverse proxies. Anything
+// else — other hosts, https loopback, non-loopback http — stays rejected.
+function isAllowedLibreTranslateEndpoint(endpoint) {
+  if (endpoint === "https://libretranslate.com") return true;
+  return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/.*)?$/.test(endpoint);
+}
+
 function sanitizeSettings(input) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Settings are invalid.");
   const output = {};
@@ -138,8 +158,7 @@ function sanitizeSettings(input) {
       output[key] = ["none", "mymemory", "libretranslate"].includes(value) ? value : "none";
     } else if (key === "libreTranslateEndpoint") {
       const endpoint = String(value || "").replace(/\/$/, "");
-      const allowed = ["https://libretranslate.com", "http://127.0.0.1:5000", "http://localhost:5000"];
-      output[key] = allowed.includes(endpoint) ? endpoint : DEFAULT_SETTINGS.libreTranslateEndpoint;
+      output[key] = isAllowedLibreTranslateEndpoint(endpoint) ? endpoint : DEFAULT_SETTINGS.libreTranslateEndpoint;
     } else if (key === "ankiDeck") {
       const deck = String(value || "").trim();
       if (!deck || deck.length > 120) throw new Error("The Anki deck name must be 1–120 characters.");
@@ -256,6 +275,15 @@ function hashString(value) {
   return (hash >>> 0).toString(36);
 }
 
+// MyMemory caps q at 500 bytes; a 450-character slice can split a surrogate pair or leave a
+// partial word. Cut at a word boundary so the request text and the cache input are the same
+// string — otherwise a sentence truncated two different ways would never share a cache key.
+function truncateForMyMemory(value) {
+  const sliced = String(value).slice(0, 450).replace(/[\uD800-\uDBFF]$/, "");
+  const wordCut = sliced.slice(0, 400).replace(/\s+\S*$/, "");
+  return (wordCut || sliced).slice(0, 450);
+}
+
 async function getSettings() {
   const [stored, local] = await Promise.all([
     chrome.storage.sync.get(SYNC_DEFAULT_SETTINGS),
@@ -270,8 +298,8 @@ async function getSettings() {
   };
 }
 
-async function translationCacheId(text, source, target) {
-  return sha256(JSON.stringify([source, target, text]));
+async function translationCacheId(text, source, target, provider) {
+  return sha256(JSON.stringify([source, target, provider, text]));
 }
 
 async function getCachedTranslation(id) {
@@ -284,44 +312,50 @@ async function getCachedTranslation(id) {
 }
 
 async function storeCachedTranslation(id, translatedText) {
-  const stored = await chrome.storage.local.get(TRANSLATION_CACHE_KEY);
-  const cache =
-    stored[TRANSLATION_CACHE_KEY] && typeof stored[TRANSLATION_CACHE_KEY] === "object"
-      ? stored[TRANSLATION_CACHE_KEY]
-      : {};
-  const now = Date.now();
-  for (const [key, entry] of Object.entries(cache)) {
-    if (!entry || entry.expiresAt <= now) delete cache[key];
-  }
-  cache[id] = {
-    translatedText: String(translatedText).slice(0, 4000),
-    createdAt: now,
-    expiresAt: now + TRANSLATION_CACHE_TTL_MS
-  };
-  const ordered = Object.entries(cache).sort((left, right) => (right[1].createdAt || 0) - (left[1].createdAt || 0));
-  const bounded = Object.fromEntries(ordered.slice(0, MAX_TRANSLATION_CACHE_ENTRIES));
-  while (JSON.stringify(bounded).length > MAX_TRANSLATION_CACHE_BYTES) {
-    const oldest = Object.keys(bounded).at(-1);
-    if (!oldest) break;
-    delete bounded[oldest];
-  }
-  await chrome.storage.local.set({ [TRANSLATION_CACHE_KEY]: bounded });
+  return withVocabMutex(async () => {
+    const stored = await chrome.storage.local.get(TRANSLATION_CACHE_KEY);
+    const cache =
+      stored[TRANSLATION_CACHE_KEY] && typeof stored[TRANSLATION_CACHE_KEY] === "object"
+        ? stored[TRANSLATION_CACHE_KEY]
+        : {};
+    const now = Date.now();
+    for (const [key, entry] of Object.entries(cache)) {
+      if (!entry || entry.expiresAt <= now) delete cache[key];
+    }
+    cache[id] = {
+      translatedText: String(translatedText).slice(0, 4000),
+      createdAt: now,
+      expiresAt: now + TRANSLATION_CACHE_TTL_MS
+    };
+    const ordered = Object.entries(cache).sort((left, right) => (right[1].createdAt || 0) - (left[1].createdAt || 0));
+    const bounded = Object.fromEntries(ordered.slice(0, MAX_TRANSLATION_CACHE_ENTRIES));
+    while (JSON.stringify(bounded).length > MAX_TRANSLATION_CACHE_BYTES) {
+      const oldest = Object.keys(bounded).at(-1);
+      if (!oldest) break;
+      delete bounded[oldest];
+    }
+    await chrome.storage.local.set({ [TRANSLATION_CACHE_KEY]: bounded });
+  });
 }
 
 async function translateText(text, source, target, settings) {
   const input = boundedText(text, 1000, "Subtitle sentence").trim();
   const sourceLanguage = normalizeLanguageCode(source, "de");
   const targetLanguage = normalizeLanguageCode(target, "en");
+  const provider = settings.translationProvider || "none";
   if (!input || sourceLanguage === targetLanguage) return input;
-  const cacheId = await translationCacheId(input, sourceLanguage, targetLanguage);
+  // The provider belongs in the key: switching providers must never serve the other
+  // provider's cached line.
+  const cacheId = await translationCacheId(input, sourceLanguage, targetLanguage, provider);
   const cached = await getCachedTranslation(cacheId);
   if (cached) return cached;
 
   let translatedText;
-  if (settings.translationProvider === "libretranslate") {
+  if (provider === "libretranslate") {
     const endpoint = String(settings.libreTranslateEndpoint || "").replace(/\/$/, "");
-    const allowed = new Set(["https://libretranslate.com", "http://127.0.0.1:5000", "http://localhost:5000"]);
-    if (!allowed.has(endpoint)) throw new Error("Use the hosted LibreTranslate endpoint or the documented local endpoint.");
+    if (!isAllowedLibreTranslateEndpoint(endpoint)) {
+      throw new Error("Use the hosted LibreTranslate endpoint or the documented local endpoint.");
+    }
     const { text: body } = await fetchTextWithTimeout(
       `${endpoint}/translate`,
       {
@@ -342,10 +376,15 @@ async function translateText(text, source, target, settings) {
         if (!response.ok) throw new Error(`LibreTranslate returned HTTP ${response.status}.`);
       }
     );
-    translatedText = JSON.parse(body).translatedText;
-  } else if (settings.translationProvider === "mymemory") {
+    try {
+      translatedText = JSON.parse(body).translatedText;
+    } catch {
+      translatedText = undefined;
+    }
+  } else if (provider === "mymemory") {
+    const query = truncateForMyMemory(input);
     const url = new URL("https://api.mymemory.translated.net/get");
-    url.searchParams.set("q", input.slice(0, 450));
+    url.searchParams.set("q", query);
     url.searchParams.set("langpair", `${sourceLanguage}|${targetLanguage}`);
     const { text: body } = await fetchTextWithTimeout(
       url,
@@ -356,13 +395,17 @@ async function translateText(text, source, target, settings) {
         if (!response.ok) throw new Error(`MyMemory returned HTTP ${response.status}.`);
       }
     );
-    translatedText = JSON.parse(body).responseData?.translatedText;
+    try {
+      translatedText = JSON.parse(body).responseData?.translatedText;
+    } catch {
+      translatedText = undefined;
+    }
   } else {
     throw new Error("No automatic translation provider is enabled.");
   }
 
   if (typeof translatedText !== "string" || !translatedText.trim()) {
-    throw new Error("The translation provider returned no text.");
+    throw new Error("The translation provider returned an unexpected response.");
   }
   const result = translatedText.trim().slice(0, 4000);
   await storeCachedTranslation(cacheId, result);
@@ -394,26 +437,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!isSetupPage(sender)) throw new Error("Settings can only be changed from the LingoDeck popup.");
         const allowed = sanitizeSettings(message.settings || {});
         const {
-          libreTranslateApiKey = "",
-          ankiApiKey = "",
+          libreTranslateApiKey: libreTranslateApiKeyGiven,
+          ankiApiKey: ankiApiKeyGiven,
           ankiApiKeyRequired: _ankiApiKeyRequired,
           ...syncSettings
         } = allowed;
         const writes = [chrome.storage.sync.set(syncSettings)];
-        const currentLocal = await chrome.storage.local.get(["ankiApiKey", "ankiApiKeyRequired"]);
-        const nextAnkiApiKey = ankiApiKey ?? "";
-        writes.push(
-          chrome.storage.local.set({
-            libreTranslateApiKey: libreTranslateApiKey ?? "",
-            ankiApiKey: nextAnkiApiKey,
-            ankiApiKeyRequired:
-              nextAnkiApiKey === (currentLocal.ankiApiKey || "")
-                ? Object.hasOwn(currentLocal, "ankiApiKeyRequired")
-                  ? currentLocal.ankiApiKeyRequired
-                  : false
-                : null
-          })
-        );
+        if (Object.hasOwn(allowed, "libreTranslateApiKey")) {
+          writes.push(chrome.storage.local.set({ libreTranslateApiKey: libreTranslateApiKeyGiven }));
+        }
+        // Only the keys actually present in the save touch local storage. A slider-only save
+        // must never clobber the stored Anki key (or flip its required flag back to unknown).
+        if (Object.hasOwn(allowed, "ankiApiKey")) {
+          const currentLocal = await chrome.storage.local.get(["ankiApiKey", "ankiApiKeyRequired"]);
+          const stored = currentLocal.ankiApiKey || "";
+          const next = ankiApiKeyGiven ?? "";
+          const ankiWrites = { ankiApiKey: next };
+          ankiWrites.ankiApiKeyRequired =
+            next === stored
+              ? Object.hasOwn(currentLocal, "ankiApiKeyRequired")
+                ? currentLocal.ankiApiKeyRequired
+                : false
+              : null;
+          writes.push(chrome.storage.local.set(ankiWrites));
+        }
         await Promise.all(writes);
         return { ok: true, settings: settingsForSender(await getSettings(), sender) };
       }
@@ -430,7 +477,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (!isAllowedSubtitleUrl(requestedUrl)) throw new Error("LingoDeck rejected an unexpected subtitle host.");
         const { response, text } = await fetchTextWithTimeout(
           requestedUrl,
-          { credentials: "omit", redirect: "error", cache: "no-store" },
+          // Follow redirects: signed CDN links (pv-cdn.net 302s) break under "error". The
+          // validator below re-checks the final URL with the same allowlist, so no new hosts
+          // are reachable — following only redirects between already-allowed origins.
+          { credentials: "omit", redirect: "follow", cache: "no-store" },
           MAX_SUBTITLE_BYTES,
           "Subtitle resource",
           (candidate) => {
@@ -485,6 +535,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const words = [...new Set(vocabulary.flatMap((entry) => [entry?.word, entry?.lemma]).filter(Boolean))];
         return { ok: true, words };
       }
+      case "GET_KNOWN_LEMMAS": {
+        // Lemmas the learner has saved — i.e. words they once had to look up. Used by the
+        // overlay's per-cue i+1 readout. Same sender gate and same lemma-only shape as
+        // GET_FLAGGED_WORDS; sentence/context fields never leave the worker.
+        if (!(isPrimeContent(sender) || isDemoPage(sender))) throw new Error("Known words are only available in the subtitle overlay.");
+        const stored = await chrome.storage.local.get("vocabulary");
+        const vocabulary = Array.isArray(stored.vocabulary) ? stored.vocabulary : [];
+        const lemmas = [...new Set(vocabulary.map((entry) => entry.lemma).filter(Boolean))].slice(0, 5000);
+        return { ok: true, lemmas };
+      }
       case "GET_VOCABULARY": {
         if (!isSetupPage(sender)) throw new Error("The vocabulary list is only available in the LingoDeck popup.");
         const stored = await chrome.storage.local.get("vocabulary");
@@ -493,9 +553,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "DELETE_WORD": {
         if (!isSetupPage(sender)) throw new Error("Words can only be removed from the LingoDeck popup.");
         const id = boundedText(message.id, 128, "Card ID");
-        const stored = await chrome.storage.local.get("vocabulary");
-        const vocabulary = Array.isArray(stored.vocabulary) ? stored.vocabulary : [];
-        await chrome.storage.local.set({ vocabulary: vocabulary.filter((entry) => entry.id !== id) });
+        await withVocabMutex(async () => {
+          const stored = await chrome.storage.local.get("vocabulary");
+          const vocabulary = Array.isArray(stored.vocabulary) ? stored.vocabulary : [];
+          await chrome.storage.local.set({ vocabulary: vocabulary.filter((entry) => entry.id !== id) });
+        });
         return { ok: true };
       }
       case "ANKI_STATUS": {

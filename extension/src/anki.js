@@ -68,7 +68,12 @@ export function highlightSurface(sentence, ...candidates) {
 }
 
 export function toAnkiTsvCell(value) {
-  return escapeHtml(value).replaceAll("\t", " ").replaceAll(/\r\n?|\n/g, "<br>");
+  const escaped = escapeHtml(value).replaceAll("\t", " ").replaceAll(/\r\n?|\n/g, "<br>");
+  // Excel/LibreOffice execute a cell as a formula when it starts with =, +, -, or @. A saved
+  // word like "=1+1" would otherwise become live spreadsheet code on TSV import — prefix an
+  // apostrophe so the cell stays inert text.
+  if (/^[=+\-@]/.test(String(value).trimStart())) return `'${escaped}`;
+  return escaped;
 }
 
 export function buildAnkiRequest(action, params = {}, apiKey = "") {

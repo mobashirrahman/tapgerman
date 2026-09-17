@@ -14,7 +14,9 @@
   }
 
   function currentPageKey() {
-    return `${location.origin}${location.pathname}`;
+    // Search params belong in the identity: Amazon swaps the ASIN via query string on some
+    // routes without changing the path, and those swaps must reset the captured tracks.
+    return `${location.origin}${location.pathname}${location.search}`;
   }
 
   function playbackIdFromUrl(value, pageKey) {
@@ -109,8 +111,10 @@
         }))
         .filter((track) => /^https:\/\//.test(track.url));
       if (!tracks.length) return;
+      // Two pathnames collide across episodes that share the first two subtitle assets; four
+      // tracks + a 512-char cap keeps the fallback discriminative without unbounded growth.
       const trackFingerprint = tracks
-        .slice(0, 2)
+        .slice(0, 4)
         .map((track) => {
           try {
             return new URL(track.url).pathname;

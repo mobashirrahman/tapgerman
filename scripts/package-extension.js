@@ -7,7 +7,7 @@ import { crc32 } from "./lib/crc32.js";
 
 const EXTENSION_ROOT = new URL("../extension/", import.meta.url);
 const DIST_DIR = new URL("../dist/", import.meta.url);
-const EXCLUDED = new Set([".DS_Store", "Thumbs.db"]);
+const EXCLUDED = new Set([".DS_Store", "Thumbs.db", "demo.html", "demo.js", "demo.css"]);
 
 // Zip entries need a timestamp; a fixed one keeps the archive byte-identical between builds.
 const DOS_TIME = 0; // 00:00:00
@@ -94,10 +94,42 @@ const files = await collectFiles(EXTENSION_ROOT);
 if (!files.some((file) => file.path === "manifest.json")) {
   throw new Error("extension/manifest.json is missing; refusing to build an unloadable archive.");
 }
+// Chrome's loader reads manifest.json before anything else; listing it first keeps the archive
+// valid even in unzip tools that stream local headers without seeking to the central directory.
+files.sort((left, right) => {
+  if (left.path === "manifest.json") return -1;
+  if (right.path === "manifest.json") return 1;
+  return left.path.localeCompare(right.path);
+});
 
 await mkdir(fileURLToPath(DIST_DIR), { recursive: true });
 const outputName = `lingodeck-${manifest.version}.zip`;
 const zip = buildZip(files);
 await writeFile(new URL(outputName, DIST_DIR), zip);
+
+// Store review rejects archives whose central directory drifts from the local entries, and
+// Chrome unzips manifest.json first — so the built artifact is read back and checked rather
+// than trusted from the buffers we just wrote.
+{
+  const names = [];
+  let offset = 0;
+  while (zip.readUInt32LE(offset) === 0x04034b50) {
+    const nameLength = zip.readUInt16LE(offset + 26);
+    const extraLength = zip.readUInt16LE(offset + 28);
+    const compressedLength = zip.readUInt32LE(offset + 18);
+    names.push(zip.subarray(offset + 30, offset + 30 + nameLength).toString("utf8"));
+    offset += 30 + nameLength + extraLength + compressedLength;
+  }
+  if (names[0] !== "manifest.json") {
+    throw new Error(`manifest.json must be the first zip entry (store requirement); got ${names[0]}.`);
+  }
+  if (names.length !== files.length) {
+    throw new Error(`Zip has ${names.length} entries but ${files.length} files were collected.`);
+  }
+  const expected = files.map((file) => file.path).sort();
+  if (expected.some((path, index) => path !== names.sort()[index])) {
+    throw new Error("Zip entries do not match the collected file list.");
+  }
+}
 
 console.log(`Packaged ${files.length} files into dist/${outputName} (${(zip.length / 1024).toFixed(1)} KB).`);

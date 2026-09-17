@@ -23,6 +23,6 @@
     "icons": "node scripts/generate-icons.js",
     "icons:check": "node scripts/generate-icons.js --check",
     "package": "node scripts/package-extension.js",
-    "verify": "npm run check && npm test"
+    "verify": "npm run check && npm run icons:check && npm test"
   }
 }

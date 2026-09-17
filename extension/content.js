@@ -41,16 +41,22 @@
     lastNativeText: "",
     lookupCard: null,
     flaggedWordSet: new Set(),
+    knownLemmaSet: new Set(),
     dictationTargetText: "",
     dictationTargetCue: null,
     dictationReplaying: false,
     hoverPaused: false,
     translationRequests: new Map(),
     translationCache: new Map(),
+    lastManifestKick: 0,
     tickTimer: null,
     domTimer: null,
     settingsLoaded: false,
     readyAnnounced: false,
+    listenersAttached: false,
+    lastParserError: "",
+    lastParserErrorAt: 0,
+    popoverAnchor: null,
     activationPromise: null
   };
 
@@ -68,7 +74,9 @@
   }
 
   function currentPageKey() {
-    return `${location.origin}${location.pathname}`;
+    // Search params belong in the identity: Amazon swaps the ASIN via query string on some
+    // routes without changing the path, and those swaps must reset the captured tracks.
+    return `${location.origin}${location.pathname}${location.search}`;
   }
 
   function isEditableTarget(event) {
@@ -91,19 +99,29 @@
     }
   }
 
-  function sendMessage(message) {
+  function sendMessage(message, timeoutMs = 8000) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(message, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-          return;
-        }
-        if (!response?.ok) {
-          reject(new Error(response?.error || "LingoDeck request failed."));
-          return;
-        }
-        resolve(response);
-      });
+      // chrome.runtime.sendMessage can hang forever when the service worker dies mid-request;
+      // without a deadline that URL/sentence stays in-flight and, say, "Translating…" never
+      // clears. Failing open lets the callers' finally blocks free their in-flight bookkeeping.
+      const timer = setTimeout(() => reject(new Error("LingoDeck timed out waiting for a response.")), timeoutMs);
+      try {
+        chrome.runtime.sendMessage(message, (response) => {
+          clearTimeout(timer);
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          if (!response?.ok) {
+            reject(new Error(response?.error || "LingoDeck request failed."));
+            return;
+          }
+          resolve(response);
+        });
+      } catch (error) {
+        clearTimeout(timer);
+        reject(error);
+      }
     });
   }
 
@@ -133,7 +151,7 @@
         .dictation-result{pointer-events:auto;font-size:calc(24px * var(--pl-scale,1));background:rgba(4,9,17,.78);padding:.14em .42em;border-radius:.28em}
         .dictation-result:empty{display:none}
         .dictation-actions{display:flex;gap:8px}
-        .ctrl{all:unset;pointer-events:auto;cursor:pointer;padding:.28em .7em;border-radius:.4em;background:rgba(4,9,17,.72);border:1px solid rgba(255,255,255,.22);color:#e7eef8;font:600 13px/1.2 Inter,system-ui,sans-serif;opacity:.42;transition:opacity .15s,background .15s}
+        .ctrl{all:unset;pointer-events:auto;cursor:pointer;padding:.28em .7em;border-radius:.4em;background:rgba(4,9,17,.72);border:1px solid rgba(255,255,255,.22);color:#e7eef8;font:600 13px/1.2 Inter,system-ui,sans-serif;opacity:.78;transition:opacity .15s,background .15s}
         .ctrl:hover,.ctrl:focus-visible{opacity:1;background:rgba(12,22,38,.92)}
         .controls{display:flex;justify-content:center}
         .diff-match{color:#8fe3ac}
@@ -141,6 +159,7 @@
         .diff-missing{color:#ff8f7a;text-decoration:line-through;opacity:.85}
         .diff-extra{color:#9aa6b8;text-decoration:line-through}
         .word{all:unset;display:inline;cursor:pointer;border-radius:.16em;padding:0 .025em;pointer-events:auto;transition:background .12s,color .12s,transform .12s}
+        .word.known{opacity:.55} .word.learning{border-bottom:2px solid #f7b32b} .learning.i-plus-one{outline:2px solid #53d18c;outline-offset:4px}
         .word:hover,.word:focus-visible{background:#f7b32b;color:#121820;outline:2px solid rgba(255,255,255,.8);outline-offset:1px;transform:translateY(-1px)}
         .status{position:absolute;top:18px;left:18px;display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(5,11,20,.78);box-shadow:0 8px 28px rgba(0,0,0,.25);font:600 12px/1.2 Inter,system-ui,sans-serif;color:#e7eef8;opacity:0;transform:translateY(-4px);transition:.2s}
         .status.visible{opacity:1;transform:none}
@@ -152,7 +171,7 @@
         .title-wrap{min-width:0;flex:1}.word-title{margin:0;font-size:27px;line-height:1.1;color:#101827;overflow-wrap:anywhere}.pronunciation{margin-top:4px;color:#607089;font-size:13px}
         .icon-btn{appearance:none;border:0;border-radius:10px;background:#edf1f6;color:#26354a;min-width:34px;height:34px;padding:0 9px;cursor:pointer;font-weight:700}.icon-btn:hover{background:#e1e8f1}
         .entry{padding:13px 0;border-top:1px solid #e7ebf1}.entry:first-of-type{border-top:0}.pos{display:flex;gap:8px;align-items:center;margin-bottom:6px;color:#915f00;font-weight:750;text-transform:uppercase;font-size:11px;letter-spacing:.08em}.headword{color:#66758a;text-transform:none;letter-spacing:0;font-weight:500}
-        .definition{margin:6px 0;color:#1b293c;list-style:none}.definition::before{content:counter(list-item) ". ";color:#9b6a0d;font-weight:700}.example{margin:6px 0 0 13px;padding-left:10px;border-left:2px solid #dfe5ed;color:#526176;font-size:12px}.example em{display:block;color:#77869a}
+        .definition{margin:6px 0;color:#1b293c;list-style:none}.definition::before{content:counter(list-item) ". ";color:#9b6a0d;font-weight:700}.sense-choice{display:flex;gap:7px;align-items:baseline;cursor:pointer}.sense-choice input{accent-color:#9b6a0d;margin:0}.example{margin:6px 0 0 13px;padding-left:10px;border-left:2px solid #dfe5ed;color:#526176;font-size:12px}.example em{display:block;color:#77869a}
         .context{margin:12px 0;padding:11px 12px;border-radius:12px;background:#f0f4f8;color:#25344a}.context strong{display:block;color:#111c2d;margin-bottom:3px}.context .translation{color:#66758a;margin-top:4px}
         .actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}.action{appearance:none;border:0;border-radius:11px;padding:10px 12px;cursor:pointer;font-weight:720;background:#162238;color:#fff}.action.primary{background:#f7b32b;color:#1b1609}.action:hover{filter:brightness(1.05)}.action:disabled{opacity:.55;cursor:wait}
         .source{display:block;margin-top:12px;color:#61728a;font-size:11px}.source a{color:#345f9c}.error{padding:12px;border-radius:10px;background:#fff0ef;color:#9b2c28}.loading{color:#637188;padding:10px 0}
@@ -160,8 +179,8 @@
         @media (max-width:700px){.learning{font-size:calc(22px * var(--pl-scale,1))}.native{font-size:calc(17px * var(--pl-scale,1))}.subtitles{width:96vw}}
       </style>
       <div class="stage">
-        <div class="status"><span class="dot"></span><span class="status-text">LingoDeck ready</span></div>
-        <div class="subtitles" aria-live="polite">
+        <div class="status"><span class="dot"></span><span class="status-text" aria-live="polite">LingoDeck ready</span></div>
+        <div class="subtitles">
           <div class="line learning" lang="de"></div>
           <div class="dictation" hidden>
             <input class="dictation-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type what you heard, then press Enter" />
@@ -171,7 +190,7 @@
             </div>
             <div class="dictation-result" aria-live="polite"></div>
           </div>
-          <div class="line native" lang="en"></div>
+          <div class="line native" lang="en" tabindex="0" role="button" aria-expanded="false" aria-label="Native subtitle line — press Enter to reveal when hidden"></div>
           <div class="controls"><button class="ctrl replay" type="button" title="Replay this line (Alt+R)">↻ Replay line</button></div>
         </div>
         <section class="popover" role="dialog" aria-label="Word definition"></section>
@@ -208,6 +227,13 @@
     });
     state.elements.native.addEventListener("click", (event) => {
       if (event.isTrusted) state.elements.native.classList.remove("concealed");
+      syncNativeExpanded();
+    });
+    state.elements.native.addEventListener("keydown", (event) => {
+      if (!event.isTrusted || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      state.elements.native.classList.remove("concealed");
+      syncNativeExpanded();
     });
     state.elements.dictationInput.addEventListener("keydown", (event) => {
       if (!event.isTrusted || event.key !== "Enter") return;
@@ -225,14 +251,28 @@
     state.elements.dictationReveal.addEventListener("click", (event) => {
       if (event.isTrusted) revealDictationDiff();
     });
-    document.addEventListener("fullscreenchange", placeOverlayForFullscreen);
-    document.addEventListener("pointerdown", closePopoverOnOutsideClick, true);
+    // injectOverlay() re-runs after a body wipe (SPA replaces <body>). document-level listeners
+    // survive that, so re-adding them here would stack N handlers per event — e.g. the popover
+    // closing twice per click. The two document listeners are attached exactly once.
+    if (!state.listenersAttached) {
+      document.addEventListener("fullscreenchange", placeOverlayForFullscreen);
+      document.addEventListener("pointerdown", closePopoverOnOutsideClick, true);
+      state.listenersAttached = true;
+    }
   }
 
   function placeOverlayForFullscreen() {
     if (!state.host) return;
     const parent = document.fullscreenElement || document.body || document.documentElement;
-    if (state.host.parentNode !== parent) parent.appendChild(state.host);
+    if (state.host.parentNode === parent) return;
+    // Fullscreen containers can reject adopted nodes (some players use closed shadow roots or
+    // remove-then-replace the element between check and append); without the fallback the
+    // overlay would vanish for the whole fullscreen session.
+    try {
+      parent.appendChild(state.host);
+    } catch {
+      document.body.appendChild(state.host);
+    }
   }
 
   function applySettings() {
@@ -251,6 +291,7 @@
     // Concealment tracks the setting alone, never the per-cue state: the line has to stay hidden
     // while a cue is playing too, or the learner just reads the answer instead of listening.
     state.elements.learning.classList.toggle("concealed", Boolean(state.settings.dictationMode));
+    syncNativeExpanded();
     // handleDictationCueChange() only runs on a cue transition, so turning the toggle off mid-line
     // needs its own explicit cleanup rather than waiting for the next cue to clear it.
     if (!state.settings.dictationMode) clearDictationPrompt();
@@ -263,6 +304,13 @@
     if (state.elements.dictationResult) state.elements.dictationResult.replaceChildren();
     if (state.elements.dictationInput) state.elements.dictationInput.value = "";
     if (state.elements.dictation) state.elements.dictation.hidden = true;
+  }
+
+  // aria-expanded reflects the concealment toggle, not per-cue text — keyboard users need to
+  // know whether the Enter-to-reveal affordance is currently meaningful.
+  function syncNativeExpanded() {
+    if (!state.elements.native) return;
+    state.elements.native.setAttribute("aria-expanded", state.elements.native.classList.contains("concealed") ? "false" : "true");
   }
 
   function showStatus(message, duration = 2600) {
@@ -284,6 +332,9 @@
   }
 
   function findVideo() {
+    // The largest video is cached until it leaves the DOM: re-scanning document on every 120 ms
+    // tick forces style/layout for the sort and is the source of the SPA's per-tick jank.
+    if (state.video?.isConnected) return state.video;
     const videos = [...document.querySelectorAll("video")];
     const candidate = videos.sort((a, b) => b.clientWidth * b.clientHeight - a.clientWidth * a.clientHeight)[0] || null;
     state.video = candidate;
@@ -314,8 +365,12 @@
   // chrome.storage.local is restricted to trusted contexts by the service worker, so the overlay
   // asks it for the word list rather than reading storage directly.
   async function loadFlaggedWordSet() {
-    const { words } = await sendMessage({ type: "GET_FLAGGED_WORDS" });
+    const [{ words }, { lemmas }] = await Promise.all([
+      sendMessage({ type: "GET_FLAGGED_WORDS" }, 4000),
+      sendMessage({ type: "GET_KNOWN_LEMMAS" }, 4000)
+    ]);
     state.flaggedWordSet = new Set(words.map(normalizeFlagToken));
+    state.knownLemmaSet = new Set(lemmas.map(normalizeFlagToken));
   }
 
   // Hand-duplicated from src/dictation.js's diffWords (content.js cannot import from src/, so this
@@ -376,13 +431,16 @@
       }
       return;
     }
+    const wasHidden = state.elements.dictation?.hidden !== false;
     clearDictationPrompt();
     if (!justEndedCue?.text) return;
     state.dictationTargetText = justEndedCue.text;
     state.dictationTargetCue = justEndedCue;
     if (state.elements.dictation) state.elements.dictation.hidden = false;
     if (state.video?.isConnected) state.video.pause();
-    state.elements.dictationInput?.focus();
+    // Focus only on the hidden→visible transition: re-focusing per cue would yank the focus
+    // (and with it, IME state and selection) out from under keyboard users mid-session.
+    if (wasHidden) state.elements.dictationInput?.focus();
   }
 
   // Alt+R and the replay button both land here: during dictation the line worth re-hearing is the
@@ -431,7 +489,10 @@
       }
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "word";
+      // Word states come from the local model: "learning" = previously saved (flagged hard),
+      // "known" = a lemma the learner once looked up. Pure highlighting — no auto-pause/jump.
+      button.className = state.flaggedWordSet.has(normalizeFlagToken(token.value)) ? "word learning" : "word";
+      if (state.knownLemmaSet.has(normalizeFlagToken(token.value))) button.classList.add("known");
       button.textContent = token.value;
       button.dataset.word = token.value;
       button.setAttribute("aria-label", `Define ${token.value}`);
@@ -450,13 +511,28 @@
     line.textContent = text;
     line.hidden = !text;
     line.classList.toggle("concealed", Boolean(state.settings.hideNative));
+    syncNativeExpanded();
   }
 
+  // Hand-copied twin of src/subtitles.js's activeCueAt (content.js is a classic script and cannot
+  // import from src/). Semantics must stay identical: unsorted input, invalid bounds skipped,
+  // end-exclusive matches, and the latest-starting overlap wins. test/content-parity.test.js
+  // pins the two copies together — edit one without the other and that test fails.
   function activeCueAt(cues, time) {
+    const target = Number(time);
+    if (!Array.isArray(cues) || !Number.isFinite(target)) return null;
     let active = null;
     for (const cue of cues) {
-      if (cue.start > time) break;
-      if (cue.start <= time && time < cue.end && (!active || cue.start > active.start)) active = cue;
+      const valid =
+        cue !== null &&
+        typeof cue === "object" &&
+        Number.isFinite(cue.start) &&
+        (Number.isFinite(cue.end) || cue.end === Number.POSITIVE_INFINITY) &&
+        cue.end >= cue.start;
+      if (!valid) continue;
+      if (cue.start <= target && target < cue.end && (!active || cue.start > active.start)) {
+        active = cue;
+      }
     }
     return active;
   }
@@ -479,7 +555,16 @@
   function updateCues() {
     if (!syncPageLifecycle() || !state.settings.enabled || !state.elements.learning) return;
     const video = state.video?.isConnected ? state.video : findVideo();
-    if (video && state.manifestTracks.length) loadPreferredManifestTracks();
+    // loadPreferredManifestTracks() is idempotent for already-fetched URLs, but it still costs a
+    // Map scan per call — at tick rate that is ~8 needless kicks/s. Once every 2 s is plenty for
+    // late-arriving manifests.
+    if (video && state.manifestTracks.length) {
+      const now = Date.now();
+      if (!state.lastManifestKick || now - state.lastManifestKick >= 2000) {
+        state.lastManifestKick = now;
+        loadPreferredManifestTracks();
+      }
+    }
     const time = video?.currentTime ?? 0;
     const learningTrack = chosenTrack("learning");
     const nativeTrack = chosenTrack("native");
@@ -509,6 +594,29 @@
     }
     renderLearningLine(learningText);
 
+    // Per-cue reading-level readout: how much of this line sits inside the learner's local
+    // vocabulary, and when the line is exactly one unknown word past it — the classic i+1
+    // sweet spot. Words never saved are neither known nor learning: absence from both sets
+    // must stay neutral, since most function words are never individually saved.
+    if (learningText && state.elements.statusText) {
+      const tokens = wordTokens(learningText);
+      const knownCount = tokens.filter((word) => state.knownLemmaSet.has(normalizeFlagToken(word))).length;
+      const unknownTokens = tokens.filter((word) => !state.knownLemmaSet.has(normalizeFlagToken(word)));
+      const knownPercent = tokens.length ? Math.round((knownCount / tokens.length) * 100) : 0;
+      // i+1 only for the single genuinely unsaved unknown — a case-variant of a flagged word
+      // already carries the learning class and does not count as new.
+      const flaggedUnknown = unknownTokens.some((word) => state.flaggedWordSet.has(normalizeFlagToken(word)));
+      const isIPlusOne = unknownTokens.length === 1 && !flaggedUnknown && tokens.length > 1;
+      if (isIPlusOne) {
+        const target = unknownTokens[0];
+        const button = [...state.elements.learning.querySelectorAll("button.word")].find(
+          (node) => (node.dataset.word || "").toLowerCase() === target.toLowerCase()
+        );
+        button?.classList.add("i-plus-one");
+      }
+      showStatus(isIPlusOne ? "1 new word" : `Known ${knownPercent}%`, 1800);
+    }
+
     if (nativeCue?.text) {
       renderNativeLine(nativeCue.text);
     } else if (learningText) {
@@ -520,7 +628,9 @@
         renderNativeLine("Translating…");
         requestTranslation(learningText, cueKey, cacheKey);
       } else {
-        renderNativeLine("Choose a lower subtitle track or enable translation fallback.");
+        // No native track and no provider: leave the lower line empty. An instruction sentence
+        // in the subtitle position reads as if it were the translation of the current line.
+        renderNativeLine("");
       }
     } else {
       renderNativeLine("");
@@ -559,13 +669,20 @@
     }
   }
 
+  // Restores native caption nodes this extension dimmed (opacity + marker attribute). Every
+  // exit path — extension disabled, unsupported route, real learning track chosen — must call
+  // this, or a storefront page keeps its captions permanently invisible.
+  function restoreHiddenCaptions() {
+    document.querySelectorAll("[data-lingodeck-observed='true']").forEach((node) => {
+      node.style.removeProperty("opacity");
+      delete node.dataset.lingodeckObserved;
+    });
+  }
+
   function detectNativeCaption() {
     if (!isSupportedPlayerRoute()) return;
     if (!state.settings.enabled) {
-      document.querySelectorAll("[data-lingodeck-observed='true']").forEach((node) => {
-        node.style.removeProperty("opacity");
-        delete node.dataset.lingodeckObserved;
-      });
+      restoreHiddenCaptions();
       state.domCueText = "";
       return;
     }
@@ -593,6 +710,12 @@
     if (text !== state.domCueText) {
       state.domCueText = text;
       if (text && !chosenTrack("learning")) updateCues();
+    }
+    // A real learning track must own the subtitle area: the DOM fallback must never compete with
+    // it, so anything this extension hid while no track was loaded comes back now.
+    if (chosenTrack("learning")) {
+      restoreHiddenCaptions();
+      state.domCueText = "";
     }
   }
 
@@ -637,10 +760,18 @@
     popover.replaceChildren();
     popover.classList.add("open");
     positionPopover(anchor);
+    state.popoverAnchor = anchor;
     const loading = document.createElement("div");
     loading.className = "loading";
     loading.textContent = `Looking up “${word}”…`;
     popover.append(loading);
+    const loadingClose = element("button", "icon-btn", "Close");
+    loadingClose.type = "button";
+    loadingClose.addEventListener("click", (event) => {
+      if (event.isTrusted) closePopover();
+    });
+    popover.append(loadingClose);
+    loadingClose.focus();
 
     try {
       const { result } = await sendMessage({ type: "LOOKUP_WORD", word, languageCode: baseLanguage(state.settings.learningLanguage) });
@@ -711,7 +842,19 @@
       list.style.paddingLeft = "22px";
       for (const definitionData of entryData.definitions.slice(0, 4)) {
         definitions.push(definitionData.gloss);
-        const definition = element("li", "definition", definitionData.gloss);
+        const definition = element("li", "definition");
+        // The card used to carry every gloss because the right sense was unknown at save time.
+        // The learner picks the sense they actually met; Save/Send narrow definitions to that
+        // one gloss, so distinct senses become distinct Anki cards instead of four-gloss mush.
+        const choice = document.createElement("label");
+        choice.className = "sense-choice";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "sense";
+        radio.value = definitionData.gloss;
+        if (definitions.length === 1) radio.checked = true;
+        choice.append(radio, document.createTextNode(definitionData.gloss));
+        definition.append(choice);
         for (const exampleData of definitionData.examples || []) {
           const example = element("div", "example", exampleData.text);
           if (exampleData.translation) example.append(element("em", "", exampleData.translation));
@@ -747,13 +890,19 @@
     };
 
     const actions = element("div", "actions");
+    // Both buttons narrow the card to the checked sense before saving: the saved card, the
+    // Anki note, and the local vocabulary row must agree on which sense this card is.
+    const withChosenSense = () => {
+      const gloss = popover.querySelector("input[name='sense']:checked")?.value;
+      return gloss ? { ...state.lookupCard, definitions: [gloss] } : state.lookupCard;
+    };
     const save = element("button", "action primary", "Save word");
     save.type = "button";
     save.addEventListener("click", async (event) => {
       if (!event.isTrusted) return;
       save.disabled = true;
       try {
-        await sendMessage({ type: "SAVE_WORD", card: state.lookupCard });
+        await sendMessage({ type: "SAVE_WORD", card: withChosenSense() });
         save.textContent = "Saved";
         showToast(`${result.word} saved to your word list.`);
         // Newly saved words should slow their next line down without waiting for a page reload.
@@ -771,7 +920,7 @@
       anki.disabled = true;
       anki.textContent = "Sending…";
       try {
-        const response = await sendMessage({ type: "ADD_TO_ANKI", card: state.lookupCard });
+        const response = await sendMessage({ type: "ADD_TO_ANKI", card: withChosenSense() });
         anki.textContent = "Added to Anki";
         showToast(
           response.appended
@@ -790,13 +939,22 @@
 
     const source = element("small", "source");
     source.append(document.createTextNode("Definitions: "));
-    const sourceLink = document.createElement("a");
-    sourceLink.href = result.sourceUrl;
-    sourceLink.target = "_blank";
-    sourceLink.rel = "noreferrer";
-    sourceLink.textContent = `${result.sourceName} · ${result.license}`;
-    source.append(sourceLink);
+    if (/^https:/.test(result.sourceUrl)) {
+      const sourceLink = document.createElement("a");
+      sourceLink.href = result.sourceUrl;
+      sourceLink.target = "_blank";
+      sourceLink.rel = "noreferrer";
+      sourceLink.textContent = `${result.sourceName} · ${result.license}`;
+      source.append(sourceLink);
+    } else {
+      // Dictionary metadata comes off the wire; a javascript:/data: href here would run in the
+      // page on click. Anything that is not a plain https link renders as inert text.
+      source.append(document.createTextNode(`${result.sourceName} · ${result.license}`));
+    }
     popover.append(source);
+    // Keyboard users land on Close first — the popover is dialog-like, and the entry list is
+    // plain text. Focus returns to the word anchor when it closes (see closePopover).
+    close.focus();
   }
 
   function formatTime(seconds) {
@@ -817,7 +975,11 @@
   }
 
   function closePopover() {
-    state.elements.popover?.classList.remove("open");
+    if (!state.elements.popover?.classList.contains("open")) return;
+    state.elements.popover.classList.remove("open");
+    // Dialog-style focus return: the anchor word is where the reader's attention lives.
+    state.popoverAnchor?.focus?.();
+    state.popoverAnchor = null;
   }
 
   function closePopoverOnOutsideClick(event) {
@@ -849,6 +1011,13 @@
     state.captureInFlightUrls.clear();
     state.manifestFetchCount = 0;
     state.capturedBodyCount = 0;
+    // The document-wide caps (64 bodies / 200 manifests / 48 transitions / 48 fetches) guard
+    // against runaway loops, not against honest use — without this reset a long binge silently
+    // stops discovering subtitles partway through, with only a console.debug to show for it.
+    state.documentFetchCount = 0;
+    state.documentBodyCount = 0;
+    state.documentManifestCount = 0;
+    state.playbackTransitionCount = 0;
     state.pageKey = nextPageKey;
     state.playbackId = nextPlaybackId;
     state.domCueText = "";
@@ -876,6 +1045,9 @@
     const supported = isSupportedPlayerRoute();
     if (!supported) {
       if (state.host) state.host.style.display = "none";
+      // Navigating player → storefront stops the cue timers; anything dimmed while the player
+      // was active must be un-dimmed here or the storefront keeps invisible captions.
+      restoreHiddenCaptions();
       clearInterval(state.tickTimer);
       clearInterval(state.domTimer);
       state.tickTimer = null;
@@ -933,7 +1105,10 @@
       if (generation !== state.generation) return;
       state.successfulUrls.add(url);
       addTrack(track);
+      state.lastParserError = "";
     } catch (error) {
+      state.lastParserError = String(error?.message || error).slice(0, 200);
+      state.lastParserErrorAt = Date.now();
       console.debug("LingoDeck ignored a subtitle-shaped resource:", error.message);
     } finally {
       if (state.captureInFlightUrls.get(url) === generation) state.captureInFlightUrls.delete(url);
@@ -966,7 +1141,10 @@
         if (generation !== state.generation || state.successfulUrls.has(metadata.url)) continue;
         state.successfulUrls.add(metadata.url);
         addTrack(track);
+        state.lastParserError = "";
       } catch (error) {
+        state.lastParserError = String(error?.message || error).slice(0, 200);
+        state.lastParserErrorAt = Date.now();
         console.debug("LingoDeck could not load a declared subtitle track:", error.message);
       } finally {
         if (state.inFlightUrls.get(metadata.url) === generation) state.inFlightUrls.delete(metadata.url);
@@ -1019,6 +1197,28 @@
         sendResponse({ ok: false, error: "Open a supported Prime Video player before importing subtitles." });
         return;
       }
+      // parseSubtitle() normally validates tracks, but the popup can push a track straight to
+      // this listener with arbitrary JSON — so the shape is re-checked here rather than trusted.
+      const roleOk = message.role === "learning" || message.role === "native";
+      const track = message.track;
+      const cuesOk =
+        Array.isArray(track?.cues) &&
+        track.cues.length <= 50_000 &&
+        track.cues.every(
+          (cue) =>
+            cue !== null &&
+            typeof cue === "object" &&
+            Number.isFinite(cue.start) &&
+            cue.start >= 0 &&
+            Number.isFinite(cue.end) &&
+            cue.end >= cue.start &&
+            typeof cue.text === "string" &&
+            cue.text.length <= 2000
+        );
+      if (!roleOk || typeof track?.id !== "string" || track.id.length < 1 || track.id.length > 240 || !cuesOk) {
+        sendResponse({ ok: false, error: "Imported subtitle track is invalid." });
+        return;
+      }
       addTrack(message.track, message.role);
       sendResponse({ ok: true });
       return;
@@ -1032,7 +1232,13 @@
           tracks: [...state.tracks.values()].map(({ cues, ...track }) => ({ ...track, cueCount: cues.length })),
           settings: state.settings,
           currentLearningText: state.learningCue?.text || state.domCueText,
-          currentNativeText: state.lastNativeText
+          currentNativeText: state.lastNativeText,
+          // Diagnostics-only fields (see Copy diagnostics in the popup): deliberately no URLs,
+          // no titles, no cue text — the report must be paste-safe in a public bug report.
+          parserError: state.lastParserError ? `${state.lastParserError} (at ${new Date(state.lastParserErrorAt).toISOString()})` : "",
+          manifestTrackCount: state.manifestTracks.length,
+          adapterVersion: chrome.runtime.getManifest().version,
+          domain: location.hostname
         }
       });
       return;
@@ -1167,7 +1373,7 @@
       injectOverlay();
       if (!state.settingsLoaded) {
         try {
-          const { settings } = await sendMessage({ type: "GET_SETTINGS" });
+          const { settings } = await sendMessage({ type: "GET_SETTINGS" }, 4000);
           state.settings = { ...state.settings, ...settings };
           state.settingsLoaded = true;
         } catch (error) {

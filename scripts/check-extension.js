@@ -30,8 +30,21 @@ for (const entry of manifest.content_scripts || []) {
 }
 
 // The Chrome Web Store requires a 128px icon, and the toolbar renders badly without a 16px one.
-for (const size of ["16", "48", "128"]) {
+// 32px is requested by default_icon too; a missing file fails the load wholesale, not just that
+// one size, so all four are checked.
+for (const size of ["16", "32", "48", "128"]) {
   if (!manifest.icons?.[size]) throw new Error(`manifest.icons is missing the ${size}px icon.`);
+}
+
+// The manifest keeps broad *.primevideo.com/* match patterns on purpose: a narrowed detail/*
+// pattern would stop injecting after SPA storefront→detail navigation. Runtime gating
+// (isSupportedPlayerRoute in both scripts) is the guarantee, so its presence is checked here —
+// if either script loses the gate, the extension scans every Amazon page again.
+for (const script of manifest.content_scripts?.flatMap((entry) => entry.js || []) || []) {
+  const source = await readFile(new URL(script, extensionRoot), "utf8");
+  if (!source.includes("isSupportedPlayerRoute")) {
+    throw new Error(`${script} no longer gates activation with isSupportedPlayerRoute().`);
+  }
 }
 
 const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));

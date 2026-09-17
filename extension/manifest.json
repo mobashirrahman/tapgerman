@@ -14,10 +14,8 @@
     "https://kaikki.org/*",
     "https://api.mymemory.translated.net/*",
     "https://libretranslate.com/*",
-    "http://127.0.0.1:5000/*",
-    "http://localhost:5000/*",
-    "http://127.0.0.1:8765/*",
-    "http://localhost:8765/*"
+    "http://127.0.0.1/*",
+    "http://localhost/*"
   ],
   "background": {
     "service_worker": "background.js",
