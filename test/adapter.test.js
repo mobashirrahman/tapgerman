@@ -19,7 +19,7 @@ function extractFunction(name) {
 // IIFE scope would.
 globalThis.MAX_MANIFEST_BYTES = 4 * 1024 * 1024;
 globalThis.MAX_TRACKS = 32;
-globalThis.CHANNEL = "lingodeck-page-v1";
+globalThis.CHANNEL = "glossline-page-v1";
 globalThis.location = { href: "https://www.primevideo.com/detail/EXAMPLE/?ie=UTF8" };
 globalThis.playbackIdFromUrl = extractFunction("playbackIdFromUrl");
 const publishManifest = extractFunction("publishManifest");

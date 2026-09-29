@@ -20,7 +20,7 @@ const patternMatch = source.match(/const subtitlePattern = (\/.*?\/i);/);
 assert.ok(patternMatch, "could not find subtitlePattern in page-hook.js");
 globalThis.subtitlePattern = eval(patternMatch[1].replace(/;$/, ""));
 globalThis.MAX_SUBTITLE_BYTES = 4 * 1024 * 1024;
-globalThis.CHANNEL = "lingodeck-page-v1";
+globalThis.CHANNEL = "glossline-page-v1";
 
 const looksLikeSubtitle = extractFunction("looksLikeSubtitle");
 const publish = extractFunction("publish");

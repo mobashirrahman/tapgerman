@@ -2,11 +2,11 @@
 
 ## Supported versions
 
-LingoDeck is pre-1.0. Only the latest tagged release receives fixes.
+GlossLine is pre-1.0. Only the latest tagged release receives fixes.
 
 ## Reporting a vulnerability
 
-Please report security issues privately through GitHub's [private vulnerability reporting](https://github.com/mobashirrahman/lingodeck/security/advisories/new) rather than in a public issue.
+Please report security issues privately through GitHub's [private vulnerability reporting](https://github.com/mobashirrahman/glossline/security/advisories/new) rather than in a public issue.
 
 Include the extension version from `extension/manifest.json`, the browser and version, and the steps or page state needed to reproduce. A proof-of-concept page or a captured message payload is especially useful.
 

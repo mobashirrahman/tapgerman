@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LingoDeck Dual Subtitles",
-  "short_name": "LingoDeck",
-  "version": "0.3.0",
+  "name": "GlossLine Dual Subtitles",
+  "short_name": "GlossLine",
+  "version": "0.4.0",
   "description": "Learn languages on Prime Video with dual subtitles, click-to-define vocabulary, and Anki export.",
   "minimum_chrome_version": "111",
   "permissions": [
@@ -28,7 +28,7 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "LingoDeck",
+    "default_title": "GlossLine",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",

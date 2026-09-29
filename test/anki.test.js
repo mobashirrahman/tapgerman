@@ -24,7 +24,7 @@ test("escapes user and subtitle text before creating Anki HTML", () => {
   assert.equal(escapeHtml('<img src=x onerror="bad">'), "&lt;img src=x onerror=&quot;bad&quot;&gt;");
 });
 
-test("builds a stable LingoDeck Anki note with context", () => {
+test("builds a stable GlossLine Anki note with context", () => {
   const card = {
     word: "Haus",
     lemma: "Haus",
@@ -40,10 +40,10 @@ test("builds a stable LingoDeck Anki note with context", () => {
   assert.deepEqual(Object.keys(note.fields), ANKI_FIELDS);
   assert.equal(note.fields.Surface, "Haus");
   assert.equal(note.fields.Lemma, "", "a lemma identical to the surface form is not repeated");
-  assert.match(note.fields.StableId, /^lingodeck-v1-[a-z0-9]+$/);
+  assert.match(note.fields.StableId, /^glossline-v1-[a-z0-9]+$/);
   assert.equal(note.fields.Meaning, '<ol class="senses"><li>house</li><li>home</li></ol>');
   assert.equal(note.fields.Sentence, 'Das ist mein <span class="target">Haus</span>.');
-  assert.deepEqual(note.tags, ["lingodeck", "language::de", buildSenseTag(card)]);
+  assert.deepEqual(note.tags, ["glossline", "language::de", buildSenseTag(card)]);
   assert.equal(note.options.allowDuplicate, false);
 });
 
@@ -57,13 +57,13 @@ test("keeps the lemma, pronunciation, and audio when they add something", () => 
     partOfSpeech: "verb",
     languageCode: "de"
   };
-  const note = buildAnkiNote(card, "LingoDeck", "[sound:lingodeck-v1-abc.mp3]");
+  const note = buildAnkiNote(card, "GlossLine", "[sound:glossline-v1-abc.mp3]");
   assert.equal(note.fields.Lemma, "sprechen");
   assert.equal(note.fields.Reading, "/ʃpʁɪçt/");
-  assert.equal(note.fields.Audio, "[sound:lingodeck-v1-abc.mp3]");
+  assert.equal(note.fields.Audio, "[sound:glossline-v1-abc.mp3]");
   assert.equal(note.fields.Meaning, "to speak", "a single sense stays unwrapped");
   assert.equal(note.fields.Sentence, 'Harvey <span class="target">spricht</span> für die Kanzlei.');
-  assert.deepEqual(note.tags, ["lingodeck", "language::de", buildSenseTag(card), "pos::verb"]);
+  assert.deepEqual(note.tags, ["glossline", "language::de", buildSenseTag(card), "pos::verb"]);
 });
 
 test("highlights the saved word without letting subtitle markup execute", () => {
@@ -145,7 +145,7 @@ test("requests origin permission before making authenticated status calls", asyn
     const results = {
       requestPermission: { permission: "granted", requireApikey: true, version: 6 },
       version: 6,
-      deckNames: ["LingoDeck"]
+      deckNames: ["GlossLine"]
     };
     return {
       ok: true,
@@ -158,7 +158,7 @@ test("requests origin permission before making authenticated status calls", asyn
   assert.deepEqual(status, {
     connected: true,
     version: 6,
-    decks: ["LingoDeck"],
+    decks: ["GlossLine"],
     permission: "granted",
     requireApiKey: true
   });
@@ -210,11 +210,11 @@ test("findExistingAnkiNote searches by deck, note type, language, sense, and wor
     return { ok: true, status: 200, json: async () => ({ result: [], error: null }) };
   };
 
-  const found = await findExistingAnkiNote(card, "LingoDeck");
+  const found = await findExistingAnkiNote(card, "GlossLine");
   assert.equal(found, null, "no match returns null rather than an empty object");
   assert.equal(
     queries[0],
-    `deck:"LingoDeck" note:"${ANKI_MODEL}" tag:"language::de" tag:"${buildSenseTag(card)}" ("Surface:sprechen" OR "Lemma:sprechen")`
+    `deck:"GlossLine" note:"${ANKI_MODEL}" tag:"language::de" tag:"${buildSenseTag(card)}" ("Surface:sprechen" OR "Lemma:sprechen")`
   );
 });
 
@@ -229,7 +229,7 @@ test("findExistingAnkiNote returns the matched note", async (context) => {
     return { ok: true, status: 200, json: async () => ({ result: results[request.action], error: null }) };
   };
 
-  const found = await findExistingAnkiNote({ word: "Haus", languageCode: "de" }, "LingoDeck");
+  const found = await findExistingAnkiNote({ word: "Haus", languageCode: "de" }, "GlossLine");
   assert.equal(found.noteId, 42);
 });
 
@@ -351,7 +351,7 @@ test("addCardToAnki creates a new note when none exists, and appends when one do
     return { ok: true, status: 200, json: async () => ({ result: results[request.action], error: null }) };
   };
 
-  const created = await addCardToAnki(card, "LingoDeck");
+  const created = await addCardToAnki(card, "GlossLine");
   assert.deepEqual(created, { noteId: 555, appended: false, created: true });
   assert.ok(calls.includes("addNote"));
   assert.ok(!calls.includes("updateNoteFields"));
@@ -360,7 +360,7 @@ test("addCardToAnki creates a new note when none exists, and appends when one do
   notesInfoResult = [
     { noteId: 555, fields: { Sentence: { value: "old" }, Translation: { value: "" }, Source: { value: "" } } }
   ];
-  const appended = await addCardToAnki({ ...card, sentence: "Ein ganz neuer Satz." }, "LingoDeck");
+  const appended = await addCardToAnki({ ...card, sentence: "Ein ganz neuer Satz." }, "GlossLine");
   assert.deepEqual(appended, { noteId: 555, appended: true });
   assert.ok(calls.includes("updateNoteFields"));
   assert.ok(!calls.includes("addNote"), "a matched word merges instead of creating a duplicate");
@@ -412,11 +412,11 @@ test("pronunciation audio already in the collection is reused instead of downloa
   });
   globalThis.fetch = mockAnki({
     calls,
-    mediaNames: ["lingodeck-v1-cached.mp3"],
+    mediaNames: ["glossline-v1-cached.mp3"],
     storeMediaFile: () => new Error("should not download")
   });
 
-  await addCardToAnki(AUDIO_CARD, "LingoDeck");
+  await addCardToAnki(AUDIO_CARD, "GlossLine");
   assert.ok(!calls.includes("storeMediaFile"), "a clip already in the media folder must not be re-fetched");
 });
 
@@ -427,15 +427,15 @@ test("the sound tag uses the filename Anki reports back, which it lowercases", a
   context.after(() => {
     globalThis.fetch = originalFetch;
   });
-  const base = mockAnki({ calls, mediaNames: [], storeMediaFile: () => "lingodeck-v1-abc.mp3" });
+  const base = mockAnki({ calls, mediaNames: [], storeMediaFile: () => "glossline-v1-abc.mp3" });
   globalThis.fetch = async (url, options) => {
     const request = JSON.parse(options.body);
     if (request.action === "addNote") addedNote = request.params.note;
     return base(url, options);
   };
 
-  await addCardToAnki({ ...AUDIO_CARD, audioUrl: "https://upload.wikimedia.org/De-Haus.OGG.MP3" }, "LingoDeck");
-  assert.equal(addedNote.fields.Audio, "[sound:lingodeck-v1-abc.mp3]");
+  await addCardToAnki({ ...AUDIO_CARD, audioUrl: "https://upload.wikimedia.org/De-Haus.OGG.MP3" }, "GlossLine");
+  assert.equal(addedNote.fields.Audio, "[sound:glossline-v1-abc.mp3]");
 });
 
 test("a rate-limited download is retried before the card gives up on audio", async (context) => {
@@ -449,7 +449,7 @@ test("a rate-limited download is retried before the card gives up on audio", asy
     calls,
     mediaNames: [],
     // Wikimedia refuses the first attempt, exactly as it does under a burst of saves.
-    storeMediaFile: (attempt) => (attempt === 1 ? new Error("download failed with return code 429") : "lingodeck-v1-ok.mp3")
+    storeMediaFile: (attempt) => (attempt === 1 ? new Error("download failed with return code 429") : "glossline-v1-ok.mp3")
   });
   globalThis.fetch = async (url, options) => {
     const request = JSON.parse(options.body);
@@ -457,9 +457,9 @@ test("a rate-limited download is retried before the card gives up on audio", asy
     return base(url, options);
   };
 
-  await addCardToAnki(AUDIO_CARD, "LingoDeck");
+  await addCardToAnki(AUDIO_CARD, "GlossLine");
   assert.equal(calls.filter((action) => action === "storeMediaFile").length, 2, "the refused attempt is retried once");
-  assert.equal(addedNote.fields.Audio, "[sound:lingodeck-v1-ok.mp3]");
+  assert.equal(addedNote.fields.Audio, "[sound:glossline-v1-ok.mp3]");
 });
 
 test("a card still saves when audio cannot be fetched at all", async (context) => {
@@ -480,7 +480,7 @@ test("a card still saves when audio cannot be fetched at all", async (context) =
     return base(url, options);
   };
 
-  const result = await addCardToAnki(AUDIO_CARD, "LingoDeck");
+  const result = await addCardToAnki(AUDIO_CARD, "GlossLine");
   assert.equal(result.created, true, "the note is still created without its pronunciation");
   assert.equal(addedNote.fields.Audio, "");
   assert.match(warnings.join(" "), /could not attach pronunciation audio for "Haus"/, "the failure is reported, not swallowed");
@@ -499,10 +499,10 @@ test("findLapsedNoteIds queries Anki's native rated:N:1 search and dedupes note 
     return { ok: true, status: 200, json: async () => ({ result: results[request.action], error: null }) };
   };
 
-  const noteIds = await findLapsedNoteIds("", { deckName: "LingoDeck", days: 3 });
+  const noteIds = await findLapsedNoteIds("", { deckName: "GlossLine", days: 3 });
   assert.deepEqual(noteIds, [900, 901], "duplicate note ids from cardsToNotes are deduped");
   assert.equal(queries[0].action, "findCards");
-  assert.equal(queries[0].params.query, `deck:"LingoDeck" note:"${ANKI_MODEL}" rated:3:1`);
+  assert.equal(queries[0].params.query, `deck:"GlossLine" note:"${ANKI_MODEL}" rated:3:1`);
   assert.deepEqual(queries[1].params.cards, [10, 11, 12]);
 });
 
@@ -534,13 +534,13 @@ test("getLapsedWordStableIds extracts each lapsed note's StableId field", async 
       findCards: [10],
       cardsToNotes: [900],
       notesInfo: [
-        { noteId: 900, fields: { StableId: { value: "lingodeck-v1-abc123" } } },
+        { noteId: 900, fields: { StableId: { value: "glossline-v1-abc123" } } },
         {} // a note AnkiConnect could not find — must not crash the extraction
       ]
     };
     return { ok: true, status: 200, json: async () => ({ result: results[request.action], error: null }) };
   };
 
-  const stableIds = await getLapsedWordStableIds("secret", { deckName: "LingoDeck" });
-  assert.deepEqual(stableIds, ["lingodeck-v1-abc123"]);
+  const stableIds = await getLapsedWordStableIds("secret", { deckName: "GlossLine" });
+  assert.deepEqual(stableIds, ["glossline-v1-abc123"]);
 });

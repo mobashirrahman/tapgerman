@@ -4,13 +4,25 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-29
+
+### Changed
+
+- Renamed the project from LingoDeck to **GlossLine**, including the GitHub repository (now `mobashirrahman/glossline`). The old name collided with two existing flashcard apps — "LingoDeck: Language Flashcards" on iOS/Android and LinguaDeck (linguadeck.net) — and read as a flashcard deck rather than as a subtitle overlay. A gloss is the linguistic term for an explanatory note attached to a word, which is what a click in the subtitle line produces, so the new name describes the actual mechanism.
+- **Breaking for existing Anki collections.** This changes identifiers baked into your notes: the note type (`LingoDeck Context v2` → `GlossLine Context v2`), the default deck name (`LingoDeck` → `GlossLine`), the `lingodeck` tag (→ `glossline`), and the `StableId` prefix (`lingodeck-v1-` → `glossline-v1-`). Reinstalling will create new notes alongside any old ones rather than updating them in place; delete the old note type and deck manually if you don't want to keep both.
+- Renamed internal identifiers to match: the page-bridge channel (`lingodeck-page-v1` → `glossline-page-v1`), the overlay host element (`#lingodeck-root` → `#glossline-root`), the Anki model helper (`ensureLingoDeckModel` → `ensureGlossLineModel`), the npm package name, the icon generator's output, and the store archive name.
+
+### Removed
+
+- Dropped "LingoDeck" from the product name. The extension works on Prime Video and does not use Amazon's trademarks in its name; that intent is unchanged.
+
 ## [0.3.0] - 2026-09-29
 
 ### Added
 
 - Repository packaging for publication: GitHub Actions CI (checks and tests on Node 20/22/24), a tag-driven release workflow that attaches the store zip, and a GitHub Pages landing page under `site/`.
 - Generated toolbar and store icons at 16/32/48/128 px, produced by `scripts/generate-icons.js` and verified in CI.
-- `npm run package`, which builds `dist/lingodeck-<version>.zip` with no third-party dependency.
+- `npm run package`, which builds `dist/lingodeck-<version>.zip` with no third-party dependency. (The archive name follows later renames; it is now `dist/glossline-<version>.zip`.)
 - Contribution, security, and privacy documentation.
 
 ### Changed

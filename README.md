@@ -2,27 +2,27 @@
 
 <img src="extension/icons/icon-128.png" width="96" height="96" alt="">
 
-# LingoDeck Dual Subtitles
+# GlossLine Dual Subtitles
 
 **Learn a language from what you are already watching on Prime Video.**
 
 A clickable learning-language subtitle above your native one, structured dictionary entries in place, and one-click Anki cards that keep the sentence they came from.
 
-[![CI](https://github.com/mobashirrahman/lingodeck/actions/workflows/ci.yml/badge.svg)](https://github.com/mobashirrahman/lingodeck/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/mobashirrahman/lingodeck?sort=semver)](https://github.com/mobashirrahman/lingodeck/releases)
+[![CI](https://github.com/mobashirrahman/glossline/actions/workflows/ci.yml/badge.svg)](https://github.com/mobashirrahman/glossline/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/mobashirrahman/glossline?sort=semver)](https://github.com/mobashirrahman/glossline/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6f42c1.svg)](extension/manifest.json)
 [![Dependencies: none](https://img.shields.io/badge/dependencies-none-success.svg)](package.json)
 
-[Website](https://mobashirrahman.github.io/lingodeck/) · [Install](#install) · [Features](#what-works-in-this-mvp) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
+[Website](https://mobashirrahman.github.io/glossline/) · [Install](#install) · [Features](#what-works-in-this-mvp) · [Privacy](PRIVACY.md) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
 ---
 
-> **Working name:** "LingoDeck" is a development codename, not a completed trademark clearance. Choose and clear the public brand before store release.
+> **Brand status:** "GlossLine" replaced the earlier development codename because it collided with two existing flashcard apps ("LingoDeck: Language Flashcards" and LinguaDeck). A *gloss* is the linguistic term for an explanatory note attached to a word, which is what clicking a subtitle word produces. No trademark clearance has been performed yet, so treat the name as provisional until that search is done before any commercial launch.
 
-LingoDeck is an open-source Chromium Manifest V3 extension for language learning on Amazon Prime Video. It renders a clickable learning-language subtitle above a native-language subtitle, supplies structured dictionary entries, saves vocabulary with sentence context, and sends cards to Anki.
+GlossLine is an open-source Chromium Manifest V3 extension for language learning on Amazon Prime Video. It renders a clickable learning-language subtitle above a native-language subtitle, supplies structured dictionary entries, saves vocabulary with sentence context, and sends cards to Anki.
 
 The initial product focus is **German → English on Prime Video**. The current UI fixes the native/lower language to English because structured dictionary glosses are English, while the subtitle, language, and dictionary adapters are intentionally general.
 
@@ -35,7 +35,7 @@ The initial product focus is **German → English on Prime Video**. The current 
 - Tokenizes the upper subtitle with `Intl.Segmenter`; every word is keyboard-focusable and clickable.
 - Looks up structured, English-language definitions, lemma/form information, part of speech, noun/verb morphology, IPA, and examples from Kaikki's English Wiktionary extraction.
 - Saves a local vocabulary list with the exact target sentence, native line, title, deep-linkable URL, and timestamp.
-- Creates a versioned `LingoDeck Context v2` note type and deck through AnkiConnect, with pronunciation audio and IPA. Saving the same word in the same sense again appends the new sentence onto the existing card instead of creating a duplicate; a genuinely different sense (a homonym) creates its own card.
+- Creates a versioned `GlossLine Context v2` note type and deck through AnkiConnect, with pronunciation audio and IPA. Saving the same word in the same sense again appends the new sentence onto the existing card instead of creating a duplicate; a genuinely different sense (a homonym) creates its own card.
 - Exports all explicitly saved words as Anki-ready UTF-8 TSV.
 - Supports pause-on-hover, hide/reveal native subtitles, size/position controls, replay, and previous/next cue shortcuts.
 - **Lapse rescue:** the Words tab surfaces Anki cards rated "Again" recently, with a one-click jump back to the Prime Video scene each card came from.
@@ -45,14 +45,14 @@ The initial product focus is **German → English on Prime Video**. The current 
 
 ## Install
 
-LingoDeck is not on the Chrome Web Store yet, so it loads unpacked.
+GlossLine is not on the Chrome Web Store yet, so it loads unpacked.
 
-1. Download the zip from the [latest release](https://github.com/mobashirrahman/lingodeck/releases) and unzip it, or clone this repository.
+1. Download the zip from the [latest release](https://github.com/mobashirrahman/glossline/releases) and unzip it, or clone this repository.
 2. Open `chrome://extensions` in Chrome, Edge, Brave, or another Chromium 111+ browser.
 3. Enable **Developer mode**.
 4. Choose **Load unpacked** and select the unzipped folder — or this repository's **`extension/`** directory.
 5. Open a Prime Video title and start playback. If the page was already open when you installed the extension, refresh it once.
-6. Turn on the subtitle language you want to learn. Open LingoDeck from the toolbar and choose upper/lower tracks if multiple tracks were discovered.
+6. Turn on the subtitle language you want to learn. Open GlossLine from the toolbar and choose upper/lower tracks if multiple tracks were discovered.
 
 To test without signing in to Prime Video, open the extension popup and choose **Setup → Open the built-in demo**.
 
@@ -61,8 +61,8 @@ To test without signing in to Prime Video, open the extension popup and choose *
 1. Install [Anki Desktop](https://apps.ankiweb.net/).
 2. In Anki, open **Tools → Add-ons → Get Add-ons** and install AnkiConnect with code `2055492159`.
 3. Restart Anki and keep it running.
-4. In LingoDeck, open **Setup** and choose a deck name. If you enabled `apiKey` in the AnkiConnect add-on configuration, enter the same key in LingoDeck; otherwise leave the field blank.
-5. Click **Test Anki connection** and approve LingoDeck in the permission dialog shown by Anki. Testing is the explicit action that asks AnkiConnect to trust the extension origin.
+4. In GlossLine, open **Setup** and choose a deck name. If you enabled `apiKey` in the AnkiConnect add-on configuration, enter the same key in GlossLine; otherwise leave the field blank.
+5. Click **Test Anki connection** and approve GlossLine in the permission dialog shown by Anki. Testing is the explicit action that asks AnkiConnect to trust the extension origin.
 6. Click a subtitle word and choose **Send to Anki**, or send a previously saved word from the Words tab.
 
 The optional AnkiConnect API key is kept in local extension storage, is never synchronized, and is never returned to Prime Video content tabs. It is sent only from the extension service worker to the loopback AnkiConnect endpoint. Changing AnkiConnect's API key or trusted-origin configuration requires testing the connection again.
@@ -91,7 +91,7 @@ npm test          # node:test suites only
 npm run check     # manifest, icon, and version-sync checks only
 npm run icons     # regenerate extension/icons/*.png from scripts/generate-icons.js
 npm run icons:check  # confirm the committed PNGs still match the generator (pixel comparison)
-npm run package   # build dist/lingodeck-<version>.zip for the store
+npm run package   # build dist/glossline-<version>.zip for the store
 ```
 
 The test suite covers SRT, WebVTT, TTML timing (including frame/tick expressions), overlap alignment, dictionary parsing, URL construction, Anki authorization payloads, note identity and card-growing/merge logic, lapse queries, the dictation word-diff, and TSV/HTML safety.
@@ -131,7 +131,7 @@ The Pages workflow needs Pages switched on once, under **Settings → Pages → 
 
 ## Privacy and product boundaries
 
-- LingoDeck does **not** inspect video/audio bytes, Widevine/CDM traffic, license requests, cookies, or authentication tokens.
+- GlossLine does **not** inspect video/audio bytes, Widevine/CDM traffic, license requests, cookies, or authentication tokens.
 - It processes only timed-text subtitle data made available to the authorized browser session.
 - Subtitle tracks remain in tab memory and are cleared on a title/episode change. Persisted data is limited to settings, explicitly saved vocabulary, and a bounded, expiring, SHA-256-keyed sentence-translation cache; no full subtitle track is persisted.
 - LibreTranslate and AnkiConnect API keys are stored only in extension-local storage. They are excluded from browser sync and content-tab settings responses.
@@ -154,6 +154,6 @@ See [the dated product research](docs/PRODUCT_RESEARCH.md) for the competitor an
 
 ## License
 
-LingoDeck code is MIT licensed. Runtime dictionary content comes from Kaikki/English Wiktionary under its own attribution/share-alike terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+GlossLine code is MIT licensed. Runtime dictionary content comes from Kaikki/English Wiktionary under its own attribution/share-alike terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Not affiliated with, endorsed by, or connected to Amazon. Amazon, Prime Video, and related marks belong to their respective owners.

@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS = {
   translationProvider: "none",
   libreTranslateEndpoint: "http://127.0.0.1:5000",
   libreTranslateApiKey: "",
-  ankiDeck: "LingoDeck",
+  ankiDeck: "GlossLine",
   ankiApiKey: "",
   ankiApiKeyRequired: false
 };
@@ -120,7 +120,7 @@ async function upsertVocabulary(card) {
 if (typeof chrome.storage.local.setAccessLevel === "function") {
   chrome.storage.local
     .setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" })
-    .catch((error) => console.warn("LingoDeck could not restrict local storage access:", error));
+    .catch((error) => console.warn("GlossLine could not restrict local storage access:", error));
 }
 
 function boundedText(value, maximum, label) {
@@ -429,12 +429,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   (async () => {
     switch (message?.type) {
       case "GET_SETTINGS": {
-        if (!isSubtitleContext(sender)) throw new Error("LingoDeck rejected an unexpected settings request.");
+        if (!isSubtitleContext(sender)) throw new Error("GlossLine rejected an unexpected settings request.");
         const settings = await getSettings();
         return { ok: true, settings: settingsForSender(settings, sender) };
       }
       case "SAVE_SETTINGS": {
-        if (!isSetupPage(sender)) throw new Error("Settings can only be changed from the LingoDeck popup.");
+        if (!isSetupPage(sender)) throw new Error("Settings can only be changed from the GlossLine popup.");
         const allowed = sanitizeSettings(message.settings || {});
         const {
           libreTranslateApiKey: libreTranslateApiKeyGiven,
@@ -465,7 +465,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { ok: true, settings: settingsForSender(await getSettings(), sender) };
       }
       case "PARSE_SUBTITLE": {
-        if (!isSubtitleContext(sender)) throw new Error("LingoDeck rejected an unexpected subtitle parser request.");
+        if (!isSubtitleContext(sender)) throw new Error("GlossLine rejected an unexpected subtitle parser request.");
         return {
           ok: true,
           track: parseSubtitle({ ...message.payload, source: isSetupPage(sender) ? "import" : "page" })
@@ -474,7 +474,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case "FETCH_SUBTITLE_URL": {
         if (!isPrimeContent(sender)) throw new Error("Subtitle URLs can only be loaded from a Prime Video player.");
         const requestedUrl = String(message.url || "");
-        if (!isAllowedSubtitleUrl(requestedUrl)) throw new Error("LingoDeck rejected an unexpected subtitle host.");
+        if (!isAllowedSubtitleUrl(requestedUrl)) throw new Error("GlossLine rejected an unexpected subtitle host.");
         const { response, text } = await fetchTextWithTimeout(
           requestedUrl,
           // Follow redirects: signed CDN links (pv-cdn.net 302s) break under "error". The
@@ -546,12 +546,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { ok: true, lemmas };
       }
       case "GET_VOCABULARY": {
-        if (!isSetupPage(sender)) throw new Error("The vocabulary list is only available in the LingoDeck popup.");
+        if (!isSetupPage(sender)) throw new Error("The vocabulary list is only available in the GlossLine popup.");
         const stored = await chrome.storage.local.get("vocabulary");
         return { ok: true, vocabulary: Array.isArray(stored.vocabulary) ? stored.vocabulary.slice(0, 2000) : [] };
       }
       case "DELETE_WORD": {
-        if (!isSetupPage(sender)) throw new Error("Words can only be removed from the LingoDeck popup.");
+        if (!isSetupPage(sender)) throw new Error("Words can only be removed from the GlossLine popup.");
         const id = boundedText(message.id, 128, "Card ID");
         await withVocabMutex(async () => {
           const stored = await chrome.storage.local.get("vocabulary");
@@ -562,7 +562,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       case "ANKI_STATUS": {
         if (!isSetupPage(sender) || typeof message.requireApiKey !== "boolean") {
-          throw new Error("Test the Anki connection from LingoDeck Setup.");
+          throw new Error("Test the Anki connection from GlossLine Setup.");
         }
         const settings = await getSettings();
         if (message.requireApiKey && !settings.ankiApiKey) {
@@ -574,7 +574,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       case "ADD_TO_ANKI": {
         if (!(isSetupPage(sender) || isPrimeContent(sender) || isDemoPage(sender))) {
-          throw new Error("LingoDeck rejected an unexpected Anki request.");
+          throw new Error("GlossLine rejected an unexpected Anki request.");
         }
         const settings = await getSettings();
         const card = sanitizeCard(message.card);
@@ -586,7 +586,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { ok: true, noteId: result.noteId, appended: result.appended };
       }
       case "GET_LAPSED_WORDS": {
-        if (!isSetupPage(sender)) throw new Error("Lapsed words are only available in the LingoDeck popup.");
+        if (!isSetupPage(sender)) throw new Error("Lapsed words are only available in the GlossLine popup.");
         const settings = await getSettings();
         const stableIds = await getLapsedWordStableIds(ankiApiKeyFor(settings), {
           deckName: settings.ankiDeck,
@@ -599,7 +599,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return { ok: true, words: vocabulary.filter((entry) => idSet.has(entry.id)) };
       }
       case "WATCH_SCENE": {
-        if (!isSetupPage(sender)) throw new Error("Scenes can only be opened from the LingoDeck popup.");
+        if (!isSetupPage(sender)) throw new Error("Scenes can only be opened from the GlossLine popup.");
         const sourceUrl = String(message.sourceUrl || "");
         if (!isPrimePlayerUrl(sourceUrl)) throw new Error("That saved link is no longer a valid Prime Video URL.");
         const timeSeconds = Math.max(0, Number(message.sourceTimeSeconds) || 0);

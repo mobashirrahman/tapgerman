@@ -1,10 +1,10 @@
 # Privacy policy
 
-LingoDeck is an open-source browser extension. It has no accounts, no analytics, no telemetry, and no server operated by the project.
+GlossLine is an open-source browser extension. It has no accounts, no analytics, no telemetry, and no server operated by the project.
 
 Last updated: 2026-08-09.
 
-## What LingoDeck stores
+## What GlossLine stores
 
 All of the following stays in your browser's extension storage on your own machine:
 
@@ -28,7 +28,7 @@ Nothing leaves your browser unless a feature you used requires it:
 
 Translation is **off by default**. AnkiConnect traffic goes to your own machine over loopback and never to a third party.
 
-## What LingoDeck never does
+## What GlossLine never does
 
 - It does not read or inspect video or audio bytes, Widevine/CDM traffic, or licence requests.
 - It does not read cookies, authentication tokens, or account details.
@@ -46,4 +46,4 @@ Requests you trigger are subject to the privacy practices of the service that re
 
 ## Questions
 
-Open an issue at https://github.com/mobashirrahman/lingodeck/issues.
+Open an issue at https://github.com/mobashirrahman/glossline/issues.

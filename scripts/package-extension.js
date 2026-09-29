@@ -103,7 +103,7 @@ files.sort((left, right) => {
 });
 
 await mkdir(fileURLToPath(DIST_DIR), { recursive: true });
-const outputName = `lingodeck-${manifest.version}.zip`;
+const outputName = `glossline-${manifest.version}.zip`;
 const zip = buildZip(files);
 await writeFile(new URL(outputName, DIST_DIR), zip);
 
