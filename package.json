@@ -1,6 +1,6 @@
 {
   "name": "lingodeck",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Chromium extension for Prime Video dual subtitles, structured word lookup, and Anki.",
   "private": true,
   "type": "module",

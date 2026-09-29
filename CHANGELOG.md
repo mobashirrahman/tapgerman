@@ -4,6 +4,8 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-29
+
 ### Added
 
 - Repository packaging for publication: GitHub Actions CI (checks and tests on Node 20/22/24), a tag-driven release workflow that attaches the store zip, and a GitHub Pages landing page under `site/`.
@@ -16,6 +18,10 @@ All notable changes to this project are documented here. This project follows [S
 - Everything that ships to the browser now lives in `extension/`. Load unpacked from that directory instead of the repository root.
 - `npm run check` additionally verifies that the manifest declares the required icons and that `package.json` and the manifest carry the same version.
 - Renamed the project from LexiCue to **LingoDeck**, including the GitHub repository (now `mobashirrahman/lingodeck`). If you tested an earlier LexiCue build against a real Anki collection, note that this changes several identifiers baked into Anki: the note type (`LexiCue Context v2` → `LingoDeck Context v2`), the default deck name (`LexiCue` → `LingoDeck`), the `lexicue` tag (→ `lingodeck`), and the `StableId` prefix (`lexicue-v1-` → `lingodeck-v1-`). Reinstalling will create new notes alongside any old ones rather than updating them in place; delete the old note type/deck manually if you don't want to keep both.
+
+### Fixed
+
+- Prime Video cold-start capture no longer treats DASH manifests and other generic-XML sidecars as subtitles. Each junk capture failed parsing downstream and burned the per-load capture budget before the real tracks arrived, so dual subtitles stayed missing until a reload. `page-hook.js` now excludes `.mpd`/DASH responses, only accepts XML media types with a subtitle extension or TTML type, and drops bodies without subtitle timing markers.
 
 ## [0.2.2] - 2026-08-09
 

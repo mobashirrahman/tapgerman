@@ -75,14 +75,36 @@
   window.addEventListener("popstate", publishRouteChange);
 
   function looksLikeSubtitle(url, contentType = "") {
+    const target = String(url || "");
+    // DASH manifests and other XML sidecars share generic XML media types with real
+    // TTML tracks. Letting them through captures them, fails parsing downstream, and
+    // burns the per-load capture budget in content.js before the real tracks arrive —
+    // the cold-start-no-subtitles failure. Real player-fetched subtitle files carry a
+    // subtitle extension; extensionless TTML still loads via the manifest path, whose
+    // validation is unchanged.
+    if (/\.mpd([?#]|$)/i.test(target)) {
+      return false;
+    }
+    if (subtitlePattern.test(target)) {
+      return true;
+    }
+    const type = String(contentType || "").split(";")[0].trim().toLowerCase();
+    if (type.includes("dash")) {
+      return false;
+    }
     return (
-      subtitlePattern.test(String(url)) ||
-      /(?:text\/vtt|application\/(?:ttml|xml)|text\/xml|subrip)/i.test(contentType)
+      type === "text/vtt" ||
+      type === "application/ttml+xml" ||
+      type === "application/ttml" ||
+      type.includes("subrip")
     );
   }
 
   function publish(url, body, contentType, pageKey) {
     if (typeof body !== "string" || !body.trim() || body.length > MAX_SUBTITLE_BYTES) return;
+    // Belt-and-braces for mislabeled responses that pass the URL/type check: without
+    // a timing marker this body fails parsing downstream and burns capture budget.
+    if (!/(-->|WEBVTT|<\s*tt[\s>])/i.test(body.slice(0, 8192))) return;
     window.postMessage(
       {
         source: CHANNEL,
