@@ -49,7 +49,7 @@ test("rows map the seven columns in header order for a full card", () => {
     "These flowers grow here.",
     "noun · plural",
     "Some Title · 0:12 · https://www.primevideo.com/detail/X",
-    "glossline language::de"
+    "tapgerman language::de"
   ]);
 });
 
@@ -58,7 +58,7 @@ test("a card without structured definitions falls back to the flat meaning", () 
   const columns = rowCells(card).map(toAnkiTsvCell).join("\t").split("\t");
   assert.equal(columns[1], "house");
   assert.equal(columns[2], "");
-  assert.equal(columns[6], "glossline language::de");
+  assert.equal(columns[6], "tapgerman language::de");
 });
 
 test("a word that could execute as a spreadsheet formula is inert in the export", () => {

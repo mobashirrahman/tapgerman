@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Report a security vulnerability
-    url: https://github.com/mobashirrahman/lingodeck/security/advisories/new
+    url: https://github.com/mobashirrahman/tapgerman/security/advisories/new
     about: Please report vulnerabilities privately instead of opening a public issue.

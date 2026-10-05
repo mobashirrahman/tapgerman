@@ -261,7 +261,7 @@ async function copyDiagnostics() {
             tracks: (page.tracks || []).map((track) => ({ id: track.id, label: track.label, language: track.language, cueCount: track.cueCount })),
             parserError: page.parserError || ""
           }
-        : "No GlossLine player tab is open — open a Prime player or the demo, then copy again."
+        : "No TapGerman player tab is open — open a Prime player or the demo, then copy again."
     };
     await navigator.clipboard.writeText(JSON.stringify(report, null, 2));
     setSaveState("Diagnostics copied — paste into a bug report.");
@@ -460,14 +460,14 @@ function exportVocabulary() {
   if (!vocabulary.length) return setSaveState("There are no saved words to export.", true);
   const header = ["#separator:Tab", "#html:true", "#columns:Word\tMeaning\tSentence\tTranslation\tGrammar\tSource\tTags"];
   const rows = vocabulary.map((card) =>
-    [card.word, card.definitions?.join("\n") || card.meaning, card.sentence, card.translation, card.grammar, card.source, `glossline language::${card.languageCode}`]
+    [card.word, card.definitions?.join("\n") || card.meaning, card.sentence, card.translation, card.grammar, card.source, `tapgerman language::${card.languageCode}`]
       .map(toAnkiTsvCell)
       .join("\t")
   );
   const url = URL.createObjectURL(new Blob([[...header, ...rows].join("\n")], { type: "text/tab-separated-values;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = `glossline-anki-${new Date().toISOString().slice(0, 10)}.txt`;
+  link.download = `tapgerman-anki-${new Date().toISOString().slice(0, 10)}.txt`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -486,7 +486,7 @@ async function testAnki() {
     settings = saved.settings;
     if (permission.permission !== "granted") {
       throw new Error(
-        "AnkiConnect access was denied. Approve GlossLine in Anki; if no dialog appears, remove its origin from ignoreOriginList in the add-on configuration."
+        "AnkiConnect access was denied. Approve TapGerman in Anki; if no dialog appears, remove its origin from ignoreOriginList in the add-on configuration."
       );
     }
     if (permission.requireApiKey && !settings.ankiApiKey) {

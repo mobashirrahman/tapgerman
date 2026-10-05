@@ -18,7 +18,7 @@
 
   function publish(url, body) {
     window.postMessage(
-      { source: "glossline-page-v1", type: "subtitle-resource", url, contentType: "application/ttml+xml", body },
+      { source: "tapgerman-page-v1", type: "subtitle-resource", url, contentType: "application/ttml+xml", body },
       window.location.origin
     );
   }

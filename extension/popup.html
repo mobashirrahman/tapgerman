@@ -3,23 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GlossLine</title>
+    <title>TapGerman</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <header class="masthead">
       <div class="brand-mark" aria-hidden="true"><span>LC</span></div>
       <div>
-        <h1>GlossLine</h1>
+        <h1>TapGerman</h1>
         <p>Turn an episode into a language lesson.</p>
       </div>
-      <label class="switch" title="Enable GlossLine">
-        <input id="enabled" type="checkbox" aria-label="Enable GlossLine" />
+      <label class="switch" title="Enable TapGerman">
+        <input id="enabled" type="checkbox" aria-label="Enable TapGerman" />
         <span></span>
       </label>
     </header>
 
-    <nav class="tabs" aria-label="GlossLine sections" role="tablist">
+    <nav class="tabs" aria-label="TapGerman sections" role="tablist">
       <button class="tab active" data-tab="watch" type="button" role="tab" id="tab-watch-button" aria-selected="true" aria-controls="tab-watch">Watch</button>
       <button class="tab" data-tab="words" type="button" role="tab" id="tab-words-button" aria-selected="false" aria-controls="tab-words">Words <span id="word-count" class="count">0</span></button>
       <button class="tab" data-tab="setup" type="button" role="tab" id="tab-setup-button" aria-selected="false" aria-controls="tab-setup">Setup</button>
@@ -125,19 +125,19 @@
             <div><h2>Anki</h2><p>Direct cards through the local AnkiConnect add-on.</p></div>
             <span id="anki-badge" class="badge">Not tested</span>
           </div>
-          <label><span>Deck name</span><input id="anki-deck" type="text" value="GlossLine" /></label>
+          <label><span>Deck name</span><input id="anki-deck" type="text" value="TapGerman" /></label>
           <label>
             <span>AnkiConnect API key <em>optional</em></span>
             <input id="anki-api-key" type="password" autocomplete="off" placeholder="Stored locally in this browser" />
             <small>Leave blank unless <code>apiKey</code> is enabled in the AnkiConnect add-on configuration.</small>
           </label>
           <button id="test-anki" class="primary" type="button">Test Anki connection</button>
-          <small>Install AnkiConnect add-on <strong>2055492159</strong>, restart Anki, keep it open, then approve GlossLine when testing.</small>
+          <small>Install AnkiConnect add-on <strong>2055492159</strong>, restart Anki, keep it open, then approve TapGerman when testing.</small>
         </div>
 
         <div class="privacy-note">
           <strong>Privacy boundary</strong>
-          <p>GlossLine reads timed-text subtitle data already exposed to your authorized browser session. It does not inspect video, Widevine, cookies, or DRM traffic. Dictionary lookups go to Kaikki; translation is sent only to the provider you choose.</p>
+          <p>TapGerman reads timed-text subtitle data already exposed to your authorized browser session. It does not inspect video, Widevine, cookies, or DRM traffic. Dictionary lookups go to Kaikki; translation is sent only to the provider you choose.</p>
         </div>
         <button id="copy-diagnostics" class="secondary full" type="button">Copy diagnostics</button>
         <button id="open-demo" class="secondary full" type="button">Open the built-in demo</button>

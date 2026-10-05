@@ -64,7 +64,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: lingodeck-unpacked-${{ github.sha }}
+          name: tapgerman-unpacked-${{ github.sha }}
           path: dist/*.zip
           if-no-files-found: error
           retention-days: 14

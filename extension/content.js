@@ -1,5 +1,5 @@
 (() => {
-  const PAGE_CHANNEL = "glossline-page-v1";
+  const PAGE_CHANNEL = "tapgerman-page-v1";
   const state = {
     settings: {
       enabled: true,
@@ -104,7 +104,7 @@
       // chrome.runtime.sendMessage can hang forever when the service worker dies mid-request;
       // without a deadline that URL/sentence stays in-flight and, say, "Translating…" never
       // clears. Failing open lets the callers' finally blocks free their in-flight bookkeeping.
-      const timer = setTimeout(() => reject(new Error("GlossLine timed out waiting for a response.")), timeoutMs);
+      const timer = setTimeout(() => reject(new Error("TapGerman timed out waiting for a response.")), timeoutMs);
       try {
         chrome.runtime.sendMessage(message, (response) => {
           clearTimeout(timer);
@@ -113,7 +113,7 @@
             return;
           }
           if (!response?.ok) {
-            reject(new Error(response?.error || "GlossLine request failed."));
+            reject(new Error(response?.error || "TapGerman request failed."));
             return;
           }
           resolve(response);
@@ -128,7 +128,7 @@
   function injectOverlay() {
     if (state.host?.isConnected) return;
     const host = document.createElement("div");
-    host.id = "glossline-root";
+    host.id = "tapgerman-root";
     host.style.cssText = "position:fixed;inset:0;z-index:2147483646;pointer-events:none;contain:layout style;";
     const root = host.attachShadow({ mode: "closed" });
     root.innerHTML = `
@@ -179,7 +179,7 @@
         @media (max-width:700px){.learning{font-size:calc(22px * var(--pl-scale,1))}.native{font-size:calc(17px * var(--pl-scale,1))}.subtitles{width:96vw}}
       </style>
       <div class="stage">
-        <div class="status"><span class="dot"></span><span class="status-text" aria-live="polite">GlossLine ready</span></div>
+        <div class="status"><span class="dot"></span><span class="status-text" aria-live="polite">TapGerman ready</span></div>
         <div class="subtitles">
           <div class="line learning" lang="de"></div>
           <div class="dictation" hidden>
@@ -673,9 +673,9 @@
   // exit path — extension disabled, unsupported route, real learning track chosen — must call
   // this, or a storefront page keeps its captions permanently invisible.
   function restoreHiddenCaptions() {
-    document.querySelectorAll("[data-glossline-observed='true']").forEach((node) => {
+    document.querySelectorAll("[data-tapgerman-observed='true']").forEach((node) => {
       node.style.removeProperty("opacity");
-      delete node.dataset.glosslineObserved;
+      delete node.dataset.tapgermanObserved;
     });
   }
 
@@ -702,7 +702,7 @@
       });
       if (visible) {
         text = visible.textContent.replace(/\s+/g, " ").trim();
-        visible.dataset.glosslineObserved = "true";
+        visible.dataset.tapgermanObserved = "true";
         visible.style.opacity = "0";
         break;
       }
@@ -1109,7 +1109,7 @@
     } catch (error) {
       state.lastParserError = String(error?.message || error).slice(0, 200);
       state.lastParserErrorAt = Date.now();
-      console.debug("GlossLine ignored a subtitle-shaped resource:", error.message);
+      console.debug("TapGerman ignored a subtitle-shaped resource:", error.message);
     } finally {
       if (state.captureInFlightUrls.get(url) === generation) state.captureInFlightUrls.delete(url);
     }
@@ -1145,7 +1145,7 @@
       } catch (error) {
         state.lastParserError = String(error?.message || error).slice(0, 200);
         state.lastParserErrorAt = Date.now();
-        console.debug("GlossLine could not load a declared subtitle track:", error.message);
+        console.debug("TapGerman could not load a declared subtitle track:", error.message);
       } finally {
         if (state.inFlightUrls.get(metadata.url) === generation) state.inFlightUrls.delete(metadata.url);
       }
@@ -1168,7 +1168,7 @@
     state.manifestTracks = sanitizeManifestTracks(data.tracks);
     if (!state.manifestTracks.length) return;
     showStatus(
-      `GlossLine found ${state.manifestTracks.length} subtitle track${state.manifestTracks.length === 1 ? "" : "s"}`
+      `TapGerman found ${state.manifestTracks.length} subtitle track${state.manifestTracks.length === 1 ? "" : "s"}`
     );
     loadPreferredManifestTracks();
   }
@@ -1391,7 +1391,7 @@
       refreshTimers();
       if (!state.readyAnnounced) {
         state.readyAnnounced = true;
-        showStatus("GlossLine ready · turn on target-language subtitles");
+        showStatus("TapGerman ready · turn on target-language subtitles");
       }
     })();
     try {

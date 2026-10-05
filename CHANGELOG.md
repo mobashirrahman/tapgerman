@@ -4,6 +4,12 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the project from GlossLine to **TapGerman**, including the GitHub repository (now `mobashirrahman/tapgerman`), so the extension and the Android app share one name.
+- **Breaking for existing Anki collections.** This changes identifiers baked into your notes: the note type (`GlossLine Context v2` → `TapGerman Context v2`), the default deck name (`GlossLine` → `TapGerman`), the `glossline` tag (→ `tapgerman`), and the `StableId` prefix (`glossline-v1-` → `tapgerman-v1-`). Reinstalling will create new notes alongside any old ones rather than updating them in place; delete the old note type and deck manually if you don't want to keep both.
+- Renamed internal identifiers to match: the page-bridge channel (`glossline-page-v1` → `tapgerman-page-v1`), the overlay host element (`#glossline-root` → `#tapgerman-root`), the Anki model helper (`ensureGlossLineModel` → `ensureTapGermanModel`), the npm package name, the icon generator's output, and the store archive name (now `dist/tapgerman-<version>.zip`).
+
 ## [0.4.0] - 2026-09-29
 
 ### Changed
