@@ -4,6 +4,8 @@ All notable changes to this project are documented here. This project follows [S
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-05
+
 ### Changed
 
 - Renamed the project from GlossLine to **TapGerman**, including the GitHub repository (now `mobashirrahman/tapgerman`), so the extension and the Android app share one name.
